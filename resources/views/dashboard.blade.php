@@ -12,7 +12,7 @@
             </div>
             <div class="page-title-right">
                 <ol class="breadcrumb m-0">
-                    <li class="breadcrumb-item"><a href="#">Clivax</a></li>
+                    <li class="breadcrumb-item"><a href="#">RHC ERP</a></li>
                     <li class="breadcrumb-item active">Dashboard</li>
                 </ol>
             </div>

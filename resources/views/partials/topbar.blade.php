@@ -3,18 +3,18 @@
         <div class="navbar-logo-box">
             <a href="{{ url('dashboard') }}" class="logo logo-dark">
                 <span class="logo-sm">
-                    <img src="{{ asset('assets/images/logo-sm.png') }}" alt="logo-sm-dark" height="20">
+                    <img src="{{ asset('assets/images/logo.png') }}" alt="logo-sm-dark" height="50">
                 </span>
                 <span class="logo-lg">
-                    <img src="{{ asset('assets/images/logo-dark.png') }}" alt="logo-dark" height="18">
+                    <img src="{{ asset('assets/images/logo.png') }}" alt="logo-dark" height="50">
                 </span>
             </a>
             <a href="{{ url('dashboard') }}" class="logo logo-light">
                 <span class="logo-sm">
-                    <img src="{{ asset('assets/images/logo-sm.png') }}" alt="logo-sm-light" height="20">
+                    <img src="{{ asset('assets/images/logo.png') }}" alt="logo-sm-light" height="50">
                 </span>
                 <span class="logo-lg">
-                    <img src="{{ asset('assets/images/logo-light.png') }}" alt="logo-light" height="18">
+                    <img src="{{ asset('assets/images/logo.png') }}" alt="logo-light" height="50">
                 </span>
             </a>
             <button type="button" class="btn btn-sm top-icon sidebar-btn" id="sidebar-btn">

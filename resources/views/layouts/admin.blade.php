@@ -3,9 +3,9 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>@yield('title', 'Dashboard') | Clivax - Admin & Dashboard Template</title>
+    <title>@yield('title', 'Dashboard') | RHC ERP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
+    <meta content="RHC ERP" name="description" />
     <meta content="Codebucks" name="author" />
     <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}">
 
@@ -26,19 +26,6 @@
                 @yield('content')
             </div>
         </div>
-
-        <footer class="footer">
-            <div class="container-fluid">
-                <div class="row align-items-center">
-                    <div class="col-sm-6">
-                        <script>document.write(new Date().getFullYear())</script> © Clivax.
-                    </div>
-                    <div class="col-sm-6 text-sm-end d-none d-sm-block">
-                        Crafted with <i class="mdi mdi-heart text-danger"></i> by <a href="http://codebucks.in/" target="_blank" class="text-muted">Codebucks</a>
-                    </div>
-                </div>
-            </div>
-        </footer>
     </div>
 </div>
 
