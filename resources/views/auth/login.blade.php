@@ -36,10 +36,9 @@
                     <div class="card-body">
                         <div class="text-center">
                             <a href="{{ url('/') }}">
-                                <img src="{{ asset('assets/images/logo-dark.png') }}" alt="logo" height="20" class="auth-logo mx-auto d-block">
+                                <img src="{{ asset('assets/images/logo.png') }}" alt="logo" height="100" class="auth-logo mx-auto d-block">
                             </a>
-                            <h4 class="mt-4">Welcome Back!</h4>
-                            <p class="text-muted">Sign in to continue to Clivax.</p>
+                            <p class="text-muted">Sign in to continue to ERP System.</p>
                         </div>
 
                         <div class="p-2 mt-4">
