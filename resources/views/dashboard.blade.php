@@ -7,7 +7,7 @@
     <div class="col-12">
         <div class="page-title-box d-flex align-items-center justify-content-between">
             <div>
-                <h4 class="fs-16 fw-semibold mb-1 mb-md-2">Good Morning, <span class="text-primary">Jonas!</span></h4>
+                <h4 class="fs-16 fw-semibold mb-1 mb-md-2">Good Morning, <span class="text-primary">Admin!</span></h4>
                 <p class="text-muted mb-0">Here's what's happening with your store today.</p>
             </div>
             <div class="page-title-right">
