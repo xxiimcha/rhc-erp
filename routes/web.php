@@ -30,4 +30,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     // Roles & Permissions (UI only for now)
     Route::view('/roles', 'admin.users.roles')->name('roles.index');
+
+    // Activity Logs (UI only for now)
+    Route::view('/activity-logs', 'admin.users.activity-logs')->name('admin.activity-logs');
+
 });
