@@ -1,4 +1,4 @@
-@extends('layouts.admin') {{-- This assumes you're using a main layout like layouts/admin.blade.php --}}
+@extends('layouts.admin')
 
 @section('title', 'User Accounts')
 
@@ -133,12 +133,16 @@
 
     </div>
 </div>
-@endsection
 
-@section('scripts')
 <script>
-    $(function () {
-        $('#userTable').DataTable();
+    $(document).ready(function () {
+        $('#userTable').DataTable({
+            responsive: true,
+            pageLength: 10,
+            columnDefs: [
+                { orderable: false, targets: -1 } // Disable sorting for "Actions" column
+            ]
+        });
     });
 </script>
 @endsection
