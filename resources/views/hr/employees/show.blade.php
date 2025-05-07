@@ -176,18 +176,27 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('editAttendanceModal');
+
     modal.addEventListener('show.bs.modal', function (event) {
         const button = event.relatedTarget;
-        const date = button.getAttribute('data-date');
+        const date = button.getAttribute('data-date'); // Format: YYYY-MM-DD
         const employee = button.getAttribute('data-employee');
         const timeIn = button.getAttribute('data-timein');
         const timeOut = button.getAttribute('data-timeout');
 
-        modal.querySelector('#modal-date').value = date;
+        const formatForInput = (datetime) => {
+            if (!datetime) return '';
+            const dt = new Date(datetime);
+            const pad = (n) => n.toString().padStart(2, '0');
+            return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        };
+
+        modal.querySelector('#modal-date').value = new Date(date).toISOString().split('T')[0];
         modal.querySelector('#modal-employee-id').value = employee;
-        modal.querySelector('#modal-time-in').value = timeIn ? new Date(timeIn).toISOString().slice(0,16) : '';
-        modal.querySelector('#modal-time-out').value = timeOut ? new Date(timeOut).toISOString().slice(0,16) : '';
+        modal.querySelector('#modal-time-in').value = formatForInput(timeIn);
+        modal.querySelector('#modal-time-out').value = formatForInput(timeOut);
     });
 });
 </script>
+
 @endsection

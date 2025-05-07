@@ -46,40 +46,55 @@ class AttendanceController extends Controller
     {
         $request->validate([
             'employee_id' => 'required|exists:employees,employee_id',
+            'date' => 'required|date',
             'time_in' => 'required|date',
             'time_out' => 'nullable|date|after_or_equal:time_in',
         ]);
 
-        $timezone = 'Asia/Manila';
+        $employeeId = $request->employee_id;
+        $date = Carbon::parse($request->date)->toDateString();
+        $timeIn = Carbon::parse($request->time_in, 'Asia/Manila');
+        $timeOut = $request->time_out ? Carbon::parse($request->time_out, 'Asia/Manila') : null;
 
-        $in = Carbon::parse($request->time_in, $timezone);
-        $out = $request->time_out ? Carbon::parse($request->time_out, $timezone) : null;
+        // Office time references
+        $standardIn = Carbon::parse($date . ' 08:00:00', 'Asia/Manila');
+        $grace = Carbon::parse($date . ' 08:05:00', 'Asia/Manila');
+        $standardOut = Carbon::parse($date . ' 17:00:00', 'Asia/Manila');
 
-        $date = $in->toDateString();
-        $startTime = Carbon::parse($date . ' 08:00:00', $timezone);
-        $graceTime = Carbon::parse($date . ' 08:05:00', $timezone);
-        $endTime = Carbon::parse($date . ' 17:00:00', $timezone);
+        $status = $timeIn->gt($grace) ? 'late' : 'on-time';
+        $late = $status === 'late' ? $timeIn->diffInMinutes($standardIn) : 0;
+        $overtime = $timeOut && $timeOut->gt($standardOut) ? $timeOut->diffInMinutes($standardOut) : 0;
+        $workStart = $timeIn->lt($standardIn) ? $standardIn : $timeIn;
+        $worked = $timeOut ? round($timeOut->diffInMinutes($workStart) / 60, 2) : null;
 
-        $status = $in->gt($graceTime) ? 'late' : 'on-time';
-        $late = $status === 'late' ? $in->diffInMinutes($startTime) : 0;
-        $overtime = $out && $out->gt($endTime) ? $out->diffInMinutes($endTime) : 0;
+        // Check for existing record
+        $record = Clocking::where('employee_id', $employeeId)
+            ->whereDate('time_in', $date)
+            ->first();
 
-        // If early, work starts at 8AM. Otherwise, actual time in.
-        $workStart = $in->lt($startTime) ? $startTime : $in;
-        $worked = $out ? round(($out->diffInMinutes($workStart)) / 60, 2) : null;
+        if ($record) {
+            $record->update([
+                'time_in' => $timeIn,
+                'time_out' => $timeOut,
+                'status' => $status,
+                'late_minutes' => $late,
+                'overtime_minutes' => $overtime,
+                'hours_worked' => $worked,
+            ]);
+        } else {
+            Clocking::create([
+                'employee_id' => $employeeId,
+                'rfid_number' => '-', // optional default
+                'time_in' => $timeIn,
+                'time_out' => $timeOut,
+                'status' => $status,
+                'late_minutes' => $late,
+                'overtime_minutes' => $overtime,
+                'hours_worked' => $worked,
+            ]);
+        }
 
-        Clocking::create([
-            'employee_id' => $request->employee_id,
-            'rfid_number' => '-', // manual entry
-            'time_in' => $in,
-            'time_out' => $out,
-            'status' => $status,
-            'late_minutes' => $late,
-            'overtime_minutes' => $overtime,
-            'hours_worked' => $worked
-        ]);
-
-        return redirect()->back()->with('success', 'Manual attendance entry added.');
+        return redirect()->back()->with('success', 'Attendance entry saved successfully.');
     }
 
     // Fetch PH holidays from API and return as a keyed collection
