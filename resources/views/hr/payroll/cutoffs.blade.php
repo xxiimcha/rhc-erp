@@ -11,24 +11,23 @@
         </div>
 
         <form method="GET" class="row g-3 mb-4">
-            <div class="col-md-4">
+            <div class="col-auto">
                 <label for="month" class="form-label">Select Month:</label>
-                <input type="month" id="month" name="month" value="{{ $month }}" class="form-control" required>
+                <input type="month" id="month" name="month" value="{{ $month }}" class="form-control">
             </div>
-            <div class="col-md-2 align-self-end">
-                <button type="submit" class="btn btn-primary w-100">Show Cutoffs</button>
+            <div class="col-auto align-self-end">
+                <button type="submit" class="btn btn-primary">Show Cutoffs</button>
             </div>
         </form>
 
         <div class="card shadow-sm">
             <div class="card-body">
-                <h5 class="mb-3">Cutoffs for {{ \Carbon\Carbon::parse($month)->format('F Y') }}</h5>
-
+                <h5>Cutoffs for {{ \Carbon\Carbon::parse($month)->format('F Y') }}</h5>
                 <table class="table table-bordered table-striped">
                     <thead class="table-dark">
                         <tr>
                             <th>Cutoff Period</th>
-                            <th class="text-center">Action</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -42,24 +41,20 @@
 
                         <tr>
                             <td>{{ $cutoff1Start->format('M d') }} - {{ $cutoff1End->format('M d, Y') }}</td>
-                            <td class="text-center">
-                                <a href="{{ route('admin.hr.payroll.view', ['month' => $month, 'cutoff' => '1-15']) }}"
-                                   class="btn btn-sm btn-primary" title="View 1st–15th payroll">
+                            <td>
+                                <a href="{{ route('admin.hr.payroll.index', ['month' => $month, 'cutoff' => '1-15']) }}" class="btn btn-sm btn-primary">
                                     View
                                 </a>
                             </td>
                         </tr>
-
                         <tr>
                             <td>{{ $cutoff2Start->format('M d') }} - {{ $cutoff2End->format('M d, Y') }}</td>
-                            <td class="text-center">
-                                <a href="{{ route('admin.hr.payroll.view', ['month' => $month, 'cutoff' => '16-30']) }}"
-                                   class="btn btn-sm btn-primary" title="View 16th–end payroll">
+                            <td>
+                                <a href="{{ route('admin.hr.payroll.index', ['month' => $month, 'cutoff' => '16-30']) }}" class="btn btn-sm btn-primary">
                                     View
                                 </a>
                             </td>
                         </tr>
-
                     </tbody>
                 </table>
             </div>

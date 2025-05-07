@@ -5,7 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\HR\EmployeeController;
 use App\Http\Controllers\HR\AttendanceController;
-use App\Http\Controllers\HR\PayrollController; // ✅ Import PayrollController
+use App\Http\Controllers\HR\PayrollController;
 use App\Http\Controllers\ClockingController;
 
 // Show login form
@@ -53,9 +53,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/{id}/edit', [AttendanceController::class, 'edit'])->name('edit');
     });
 
-    // ✅ HR → Payroll
+    //HR → Payroll
     Route::prefix('hr/payroll')->name('hr.payroll.')->group(function () {
         Route::get('/', [PayrollController::class, 'index'])->name('index');
+        Route::get('/view', [PayrollController::class, 'view'])->name('view'); // <-- new
     });
 });
 
