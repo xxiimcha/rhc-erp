@@ -41,7 +41,7 @@ class PayrollController extends Controller
                 DB::raw('SUM(overtime_minutes) as total_overtime'),
                 DB::raw('SUM(late_minutes) as total_late')
             )
-            ->whereBetween('work_date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
+            ->whereBetween('created_at', [$start->startOfDay(), $end->endOfDay()])
             ->groupBy('employee_id')
             ->get()
             ->keyBy('employee_id');
