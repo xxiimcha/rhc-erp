@@ -42,6 +42,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/', [EmployeeController::class, 'store'])->name('store');
         Route::get('/{id}', [EmployeeController::class, 'show'])->name('show'); // ← NEW
         Route::post('/{id}/rfid', [EmployeeController::class, 'storeRfid'])->name('rfid.store');
-    });
-    
+    }); 
 });
+
+Route::view('/clocking', 'clocking.index')->name('clocking.index');
+Route::post('/clocking', [\App\Http\Controllers\ClockingController::class, 'submit'])->name('clocking.submit');
