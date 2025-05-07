@@ -2,9 +2,9 @@
     <div data-simplebar class="h-100">
         <div id="sidebar-menu">
             <ul class="left-menu list-unstyled" id="side-menu">
-                
+
                 <li>
-                    <a href="{{ url('dashboard') }}">
+                    <a href="{{ url('admin/dashboard') }}">
                         <i class="fas fa-chart-line"></i>
                         <span>Dashboard & Analytics</span>
                     </a>
@@ -17,11 +17,11 @@
                         <span>HR Module</span>
                     </a>
                     <ul class="sub-menu">
-                        <li><a href="{{ url('hr/employees') }}">Employee Records</a></li>
-                        <li><a href="{{ url('hr/attendance') }}">Attendance Tracking</a></li>
-                        <li><a href="{{ url('hr/leaves') }}">Leave Management</a></li>
-                        <li><a href="{{ url('hr/payroll') }}">Payroll</a></li>
-                        <li><a href="{{ url('hr/recruitment') }}">Recruitment</a></li>
+                        <li><a href="{{ url('admin/hr/employees') }}">Employee Records</a></li>
+                        <li><a href="{{ url('admin/hr/attendance') }}">Attendance Tracking</a></li>
+                        <li><a href="{{ url('admin/hr/leaves') }}">Leave Management</a></li>
+                        <li><a href="{{ url('admin/hr/payroll') }}">Payroll</a></li>
+                        <li><a href="{{ url('admin/hr/recruitment') }}">Recruitment</a></li>
                     </ul>
                 </li>
 
@@ -32,10 +32,10 @@
                         <span>Finance Module</span>
                     </a>
                     <ul class="sub-menu">
-                        <li><a href="{{ url('finance/expenses') }}">Expenses</a></li>
-                        <li><a href="{{ url('finance/payroll') }}">Payroll</a></li>
-                        <li><a href="{{ url('finance/invoices') }}">Invoices</a></li>
-                        <li><a href="{{ url('finance/reports') }}">Financial Reports</a></li>
+                        <li><a href="{{ url('admin/finance/expenses') }}">Expenses</a></li>
+                        <li><a href="{{ url('admin/finance/payroll') }}">Payroll</a></li>
+                        <li><a href="{{ url('admin/finance/invoices') }}">Invoices</a></li>
+                        <li><a href="{{ url('admin/finance/reports') }}">Financial Reports</a></li>
                     </ul>
                 </li>
 
@@ -46,9 +46,9 @@
                         <span>IT Management</span>
                     </a>
                     <ul class="sub-menu">
-                        <li><a href="{{ url('it/assets') }}">IT Assets</a></li>
-                        <li><a href="{{ url('it/tickets') }}">Support Tickets</a></li>
-                        <li><a href="{{ url('it/logs') }}">System Logs</a></li>
+                        <li><a href="{{ url('admin/it/assets') }}">IT Assets</a></li>
+                        <li><a href="{{ url('admin/it/tickets') }}">Support Tickets</a></li>
+                        <li><a href="{{ url('admin/it/logs') }}">System Logs</a></li>
                     </ul>
                 </li>
 
@@ -59,10 +59,10 @@
                         <span>Projects</span>
                     </a>
                     <ul class="sub-menu">
-                        <li><a href="{{ url('projects') }}">All Projects</a></li>
-                        <li><a href="{{ url('projects/create') }}">Create Project</a></li>
-                        <li><a href="{{ url('tasks') }}">Task Assignments</a></li>
-                        <li><a href="{{ url('tasks/progress') }}">Progress Tracking</a></li>
+                        <li><a href="{{ url('admin/projects') }}">All Projects</a></li>
+                        <li><a href="{{ url('admin/projects/create') }}">Create Project</a></li>
+                        <li><a href="{{ url('admin/tasks') }}">Task Assignments</a></li>
+                        <li><a href="{{ url('admin/tasks/progress') }}">Progress Tracking</a></li>
                     </ul>
                 </li>
 
@@ -73,9 +73,9 @@
                         <span>Admin Tools</span>
                     </a>
                     <ul class="sub-menu">
-                        <li><a href="{{ url('admin/announcements') }}">Announcements</a></li>
-                        <li><a href="{{ url('admin/documents') }}">Document Management</a></li>
-                        <li><a href="{{ url('admin/communications') }}">Internal Communications</a></li>
+                        <li><a href="{{ url('admin/admin/announcements') }}">Announcements</a></li>
+                        <li><a href="{{ url('admin/admin/documents') }}">Document Management</a></li>
+                        <li><a href="{{ url('admin/admin/communications') }}">Internal Communications</a></li>
                     </ul>
                 </li>
 
@@ -86,10 +86,10 @@
                         <span>Inventory</span>
                     </a>
                     <ul class="sub-menu">
-                        <li><a href="{{ url('inventory/stocks') }}">Stock Inventory</a></li>
-                        <li><a href="{{ url('inventory/requests') }}">Purchase Requests</a></li>
-                        <li><a href="{{ url('inventory/suppliers') }}">Suppliers</a></li>
-                        <li><a href="{{ url('inventory/approvals') }}">Procurement Approvals</a></li>
+                        <li><a href="{{ url('admin/inventory/stocks') }}">Stock Inventory</a></li>
+                        <li><a href="{{ url('admin/inventory/requests') }}">Purchase Requests</a></li>
+                        <li><a href="{{ url('admin/inventory/suppliers') }}">Suppliers</a></li>
+                        <li><a href="{{ url('admin/inventory/approvals') }}">Procurement Approvals</a></li>
                     </ul>
                 </li>
 
@@ -100,10 +100,10 @@
                         <span>CRM</span>
                     </a>
                     <ul class="sub-menu">
-                        <li><a href="{{ url('crm/clients') }}">Client Information</a></li>
-                        <li><a href="{{ url('crm/leads') }}">Leads</a></li>
-                        <li><a href="{{ url('crm/interactions') }}">Interactions</a></li>
-                        <li><a href="{{ url('crm/campaigns') }}">Marketing Campaigns</a></li>
+                        <li><a href="{{ url('admin/crm/clients') }}">Client Information</a></li>
+                        <li><a href="{{ url('admin/crm/leads') }}">Leads</a></li>
+                        <li><a href="{{ url('admin/crm/interactions') }}">Interactions</a></li>
+                        <li><a href="{{ url('admin/crm/campaigns') }}">Marketing Campaigns</a></li>
                     </ul>
                 </li>
 
@@ -114,9 +114,9 @@
                         <span>Compliance</span>
                     </a>
                     <ul class="sub-menu">
-                        <li><a href="{{ url('compliance/policies') }}">Policies</a></li>
-                        <li><a href="{{ url('compliance/incidents') }}">Legal Incidents</a></li>
-                        <li><a href="{{ url('compliance/contracts') }}">Contracts</a></li>
+                        <li><a href="{{ url('admin/compliance/policies') }}">Policies</a></li>
+                        <li><a href="{{ url('admin/compliance/incidents') }}">Legal Incidents</a></li>
+                        <li><a href="{{ url('admin/compliance/contracts') }}">Contracts</a></li>
                     </ul>
                 </li>
 
@@ -127,10 +127,10 @@
                         <span>Franchise</span>
                     </a>
                     <ul class="sub-menu">
-                        <li><a href="{{ url('franchise/list') }}">Franchisee List</a></li>
-                        <li><a href="{{ url('franchise/contracts') }}">Contracts</a></li>
-                        <li><a href="{{ url('franchise/evaluations') }}">Evaluations</a></li>
-                        <li><a href="{{ url('franchise/applications') }}">Applications</a></li>
+                        <li><a href="{{ url('admin/franchise/list') }}">Franchisee List</a></li>
+                        <li><a href="{{ url('admin/franchise/contracts') }}">Contracts</a></li>
+                        <li><a href="{{ url('admin/franchise/evaluations') }}">Evaluations</a></li>
+                        <li><a href="{{ url('admin/franchise/applications') }}">Applications</a></li>
                     </ul>
                 </li>
 
@@ -141,9 +141,9 @@
                         <span>Users</span>
                     </a>
                     <ul class="sub-menu">
-                        <li><a href="{{ url('users') }}">User Accounts</a></li>
-                        <li><a href="{{ url('users/roles') }}">Roles & Permissions</a></li>
-                        <li><a href="{{ url('users/activity') }}">Activity Logs</a></li>
+                        <li><a href="{{ url('admin/users') }}">User Accounts</a></li>
+                        <li><a href="{{ url('admin/users/roles') }}">Roles & Permissions</a></li>
+                        <li><a href="{{ url('admin/users/activity') }}">Activity Logs</a></li>
                     </ul>
                 </li>
 

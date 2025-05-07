@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\HR\EmployeeController;
+use App\Http\Controllers\HR\AttendanceController;
+use App\Http\Controllers\ClockingController;
 
 // Show login form
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
@@ -35,15 +37,23 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // Activity Logs (UI only for now)
     Route::view('/activity-logs', 'admin.users.activity-logs')->name('activity-logs');
 
-    // HR → Employee Records (with controller)
+    // HR → Employee Records
     Route::prefix('hr/employees')->name('hr.employees.')->group(function () {
         Route::get('/', [EmployeeController::class, 'index'])->name('index');
         Route::get('/create', [EmployeeController::class, 'create'])->name('create');
         Route::post('/', [EmployeeController::class, 'store'])->name('store');
-        Route::get('/{id}', [EmployeeController::class, 'show'])->name('show'); // ← NEW
+        Route::get('/{id}', [EmployeeController::class, 'show'])->name('show');
         Route::post('/{id}/rfid', [EmployeeController::class, 'storeRfid'])->name('rfid.store');
-    }); 
+    });
+
+    // HR → Attendance Tracking
+    Route::prefix('hr/attendance')->name('hr.attendance.')->group(function () {
+        Route::get('/', [AttendanceController::class, 'index'])->name('index');
+        Route::post('/manual', [AttendanceController::class, 'storeManual'])->name('manual.store');
+        Route::get('/{id}/edit', [AttendanceController::class, 'edit'])->name('edit');
+    });
 });
 
+// Clocking System
 Route::view('/clocking', 'clocking.index')->name('clocking.index');
-Route::post('/clocking', [\App\Http\Controllers\ClockingController::class, 'submit'])->name('clocking.submit');
+Route::post('/clocking', [ClockingController::class, 'submit'])->name('clocking.submit');

@@ -19,4 +19,9 @@ class Clocking extends Model
         'overtime_minutes',
         'hours_worked'
     ];
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
+    }
 }

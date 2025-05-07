@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
+use App\Models\Clocking;
 use App\Models\Employee;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class EmployeeController extends Controller
 {
@@ -22,7 +24,18 @@ class EmployeeController extends Controller
     public function show($id)
     {
         $employee = Employee::findOrFail($id);
-        return view('hr.employees.show', compact('employee'));
+
+        $month = request()->input('month', now()->format('Y-m'));
+        $clockings = Clocking::where('employee_id', $employee->employee_id)
+            ->whereYear('time_in', Carbon::parse($month)->year)
+            ->whereMonth('time_in', Carbon::parse($month)->month)
+            ->orderBy('time_in', 'asc')
+            ->get()
+            ->groupBy(function ($item) {
+                return Carbon::parse($item->time_in)->format('Y-m-d');
+            });
+
+        return view('hr.employees.show', compact('employee', 'clockings', 'month'));
     }
 
     public function storeRfid(Request $request, $id)
@@ -56,7 +69,7 @@ class EmployeeController extends Controller
 
         $year = date('Y', strtotime($request->date_hired));
         $count = Employee::whereYear('date_hired', $year)->count() + 1;
-        $employeeId = 'EMP' . $year . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        $employeeId = $year . str_pad($count, 3, '0', STR_PAD_LEFT); // removed 'EMP' and '-'
 
         Employee::create([
             'employee_id' => $employeeId,
