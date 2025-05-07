@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\HR\EmployeeController;
 
 // Show login form
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
@@ -21,7 +22,7 @@ Route::get('/dashboard', function () {
 // Admin Routes (can wrap with middleware when needed)
 // Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
 Route::prefix('admin')->name('admin.')->group(function () {
-    
+
     // User Management
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
@@ -32,6 +33,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::view('/roles', 'admin.users.roles')->name('roles.index');
 
     // Activity Logs (UI only for now)
-    Route::view('/activity-logs', 'admin.users.activity-logs')->name('admin.activity-logs');
+    Route::view('/activity-logs', 'admin.users.activity-logs')->name('activity-logs');
 
+    // HR → Employee Records (with controller)
+    Route::prefix('hr/employees')->name('hr.employees.')->group(function () {
+        Route::get('/', [EmployeeController::class, 'index'])->name('index');
+        Route::get('/create', [EmployeeController::class, 'create'])->name('create');
+        Route::post('/', [EmployeeController::class, 'store'])->name('store');
+    });
 });

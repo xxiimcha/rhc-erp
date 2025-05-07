@@ -11,9 +11,9 @@
                 <h4 class="page-title">Employee Records</h4>
             </div>
             <div class="col-sm-6 text-sm-end">
-                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+                <a href="{{ route('admin.hr.employees.create') }}" class="btn btn-success btn-sm">
                     <i class="fas fa-user-plus"></i> Add Employee
-                </button>
+                </a>
             </div>
         </div>
 
@@ -31,70 +31,35 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{-- Sample static row --}}
+                        @foreach ($employees as $employee)
                         <tr>
-                            <td>EMP001</td>
-                            <td>Charmaine Cator</td>
-                            <td>HR Officer</td>
-                            <td>Human Resources</td>
-                            <td><span class="badge bg-success">Active</span></td>
+                            <td>{{ $employee->employee_id }}</td>
+                            <td>{{ $employee->first_name }} {{ $employee->middle_name }} {{ $employee->last_name }}</td>
+                            <td>{{ $employee->position }}</td>
+                            <td>{{ $employee->department }}</td>
+                            <td>
+                                <span class="badge bg-success">Active</span>
+                            </td>
                             <td class="text-center">
-                                <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i></button>
-                                <button class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
-                                <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                                <a href="#" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>
+                                <a href="#" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
+                                <form action="#" method="POST" style="display:inline-block;">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
+                        @endforeach
                     </tbody>
                 </table>
-            </div>
-        </div>
-
-        {{-- Add Employee Modal --}}
-        <div class="modal fade" id="addEmployeeModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <form class="modal-content">
-                    <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title">Add New Employee</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">First Name</label>
-                                <input type="text" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Last Name</label>
-                                <input type="text" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Position</label>
-                                <input type="text" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Department</label>
-                                <input type="text" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Status</label>
-                                <select class="form-select">
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Save Employee</button>
-                    </div>
-                </form>
             </div>
         </div>
 
     </div>
 </div>
 
-@section('scripts')
 <script>
     $(function () {
         $('#employeeTable').DataTable({
