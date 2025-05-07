@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\HR\EmployeeController;
 use App\Http\Controllers\HR\AttendanceController;
+use App\Http\Controllers\HR\PayrollController; // ✅ Import PayrollController
 use App\Http\Controllers\ClockingController;
 
 // Show login form
@@ -21,8 +22,7 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->name('dashboard');
 
-// Admin Routes (can wrap with middleware when needed)
-// Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+// Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
 
     // User Management
@@ -31,10 +31,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 
-    // Roles & Permissions (UI only for now)
+    // Roles & Permissions
     Route::view('/roles', 'admin.users.roles')->name('roles.index');
 
-    // Activity Logs (UI only for now)
+    // Activity Logs
     Route::view('/activity-logs', 'admin.users.activity-logs')->name('activity-logs');
 
     // HR → Employee Records
@@ -51,6 +51,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [AttendanceController::class, 'index'])->name('index');
         Route::post('/manual', [AttendanceController::class, 'storeManual'])->name('manual.store');
         Route::get('/{id}/edit', [AttendanceController::class, 'edit'])->name('edit');
+    });
+
+    // ✅ HR → Payroll
+    Route::prefix('hr/payroll')->name('hr.payroll.')->group(function () {
+        Route::get('/', [PayrollController::class, 'index'])->name('index');
     });
 });
 
