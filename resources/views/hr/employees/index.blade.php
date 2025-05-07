@@ -41,7 +41,12 @@
                                 <span class="badge bg-success">Active</span>
                             </td>
                             <td class="text-center">
-                                <a href="#" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>
+                                <a href="{{ route('admin.hr.employees.show', $employee->id) }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#rfidModal{{ $employee->id }}">
+                                    <i class="fas fa-id-card"></i>
+                                </a>
                                 <a href="#" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
                                 <form action="#" method="POST" style="display:inline-block;">
                                     @csrf @method('DELETE')
@@ -54,6 +59,33 @@
                         @endforeach
                     </tbody>
                 </table>
+
+                @foreach ($employees as $employee)
+                    <div class="modal fade" id="rfidModal{{ $employee->id }}" tabindex="-1" aria-labelledby="rfidModalLabel{{ $employee->id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content"> {{-- 🟢 This was missing --}}
+                                <form method="POST" action="{{ route('admin.hr.employees.rfid.store', $employee->id) }}">
+                                    @csrf
+                                    <div class="modal-header bg-success text-white">
+                                        <h5 class="modal-title" id="rfidModalLabel{{ $employee->id }}">
+                                            Enroll RFID for {{ $employee->employee_id }}
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label for="rfid_number" class="form-label">RFID Card Number</label>
+                                        <input type="text" name="rfid_number" class="form-control" required placeholder="Tap card or enter manually">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-save"></i> Save RFID
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
             </div>
         </div>
 
@@ -65,6 +97,11 @@
         $('#employeeTable').DataTable({
             responsive: true,
             pageLength: 10
+        });
+
+        // Focus the RFID input when the modal is shown
+        $('div[id^="rfidModal"]').on('shown.bs.modal', function () {
+            $(this).find('input[name="rfid_number"]').focus();
         });
     });
 </script>

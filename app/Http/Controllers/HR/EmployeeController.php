@@ -19,6 +19,25 @@ class EmployeeController extends Controller
         return view('hr.employees.create');
     }
 
+    public function show($id)
+    {
+        $employee = Employee::findOrFail($id);
+        return view('hr.employees.show', compact('employee'));
+    }
+
+    public function storeRfid(Request $request, $id)
+    {
+        $request->validate([
+            'rfid_number' => 'required|unique:employees,rfid_number',
+        ]);
+
+        $employee = Employee::findOrFail($id);
+        $employee->rfid_number = $request->rfid_number;
+        $employee->save();
+
+        return redirect()->route('admin.hr.employees.index')->with('success', 'RFID enrolled successfully.');
+    }
+
     public function store(Request $request)
     {
         $request->validate([

@@ -40,5 +40,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [EmployeeController::class, 'index'])->name('index');
         Route::get('/create', [EmployeeController::class, 'create'])->name('create');
         Route::post('/', [EmployeeController::class, 'store'])->name('store');
+        Route::get('/{id}', [EmployeeController::class, 'show'])->name('show'); // ← NEW
+        Route::post('/{id}/rfid', [EmployeeController::class, 'storeRfid'])->name('rfid.store');
     });
+    
 });
