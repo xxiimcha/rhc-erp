@@ -14,14 +14,9 @@ class PayrollController extends Controller
     public function index(Request $request)
     {
         $month = $request->get('month', now()->format('Y-m'));
-        $cutoff = $request->get('cutoff');
 
-        // If no cutoff, show only the cutoff periods for the selected month
-        if (!$cutoff) {
-            return view('hr.payroll.cutoffs', compact('month'));
-        }
-
-        return $this->view($request);
+        // Simply load the cutoff selection page
+        return view('hr.payroll.cutoffs', compact('month'));
     }
 
     public function view(Request $request)
@@ -29,12 +24,12 @@ class PayrollController extends Controller
         $cutoff = $request->get('cutoff', '1-15');
         $month = $request->get('month', now()->format('Y-m'));
 
-        // Determine cutoff range
+        // Parse cutoff range
         [$start, $end] = $cutoff === '16-30'
-            ? [Carbon::parse("$month-16"), Carbon::parse($month)->endOfMonth()]
+            ? [Carbon::parse("$month-16"), Carbon::parse("$month")->endOfMonth()]
             : [Carbon::parse("$month-01"), Carbon::parse("$month-15")];
 
-        // Get summarized clocking data
+        // Fetch summarized clocking data
         $clockings = Clocking::select(
                 'employee_id',
                 DB::raw('SUM(hours_worked) as total_hours'),
@@ -48,6 +43,13 @@ class PayrollController extends Controller
 
         $employees = Employee::all();
 
-        return view('hr.payroll.index', compact('employees', 'clockings', 'cutoff', 'month', 'start', 'end'));
+        return view('hr.payroll.index', compact(
+            'employees',
+            'clockings',
+            'cutoff',
+            'month',
+            'start',
+            'end'
+        ));
     }
 }

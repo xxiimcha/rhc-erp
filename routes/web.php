@@ -55,8 +55,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     //HR → Payroll
     Route::prefix('hr/payroll')->name('hr.payroll.')->group(function () {
-        Route::get('/', [PayrollController::class, 'index'])->name('index');
-        Route::get('/view', [PayrollController::class, 'view'])->name('view'); // <-- new
+        Route::get('/', [PayrollController::class, 'index'])->name('index'); // shows cutoff options
+        Route::get('/view', [PayrollController::class, 'view'])->name('view'); // shows per-employee payroll
     });
 });
 

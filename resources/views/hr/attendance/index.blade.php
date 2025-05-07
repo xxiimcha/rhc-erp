@@ -24,7 +24,7 @@
                         <input type="text" id="searchInput" class="form-control" placeholder="Search by name or position...">
                     </div>
                 </div>
-                <table id="attendanceTable" class="table table-bordered table-striped dt-responsive nowrap" style="width:100%">
+                <table id="attendanceTable" class="table table-hover table-bordered table-striped dt-responsive nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                     <thead class="table-danger">
                         <tr>
                             <th>#</th>
@@ -78,20 +78,23 @@
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label for="employee_id" class="form-label">Select Employee</label>
-                                <select name="employee_id" class="form-control" required>
+                                <select name="employee_id" class="form-select" required>
                                     @foreach($employees as $emp)
-                                        <option value="{{ $emp->employee_id }}">{{ $emp->first_name }} {{ $emp->last_name }} ({{ $emp->position }})</option>
+                                        <option value="{{ $emp->employee_id }}">
+                                            {{ $emp->first_name }} {{ $emp->last_name }} ({{ $emp->position }})
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="mb-3">
                                 <label for="time_in" class="form-label">Time In</label>
-                                <input type="datetime-local" name="time_in" class="form-control" required>
+                                <input type="datetime-local" name="time_in" id="manual-time-in" class="form-control" required>
                             </div>
                             <div class="mb-3">
                                 <label for="time_out" class="form-label">Time Out</label>
                                 <input type="datetime-local" name="time_out" class="form-control">
                             </div>
+                            <input type="text" name="date" id="manual-date">
                         </div>
                         <div class="modal-footer">
                             <button type="submit" class="btn btn-primary">Save</button>
@@ -113,6 +116,25 @@
 
         $('#searchInput').on('keyup', function () {
             table.search(this.value).draw();
+        });
+
+        // Set current date in MM/DD/YYYY format
+        const now = new Date();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        const formattedToday = `${mm}/${dd}/${yyyy}`;
+        $('#manual-date').val(formattedToday);
+
+        // Optionally update date when time-in changes
+        $('#manual-time-in').on('change', function () {
+            if (this.value) {
+                const date = new Date(this.value);
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                const yyyy = date.getFullYear();
+                $('#manual-date').val(`${mm}/${dd}/${yyyy}`);
+            }
         });
     });
 </script>

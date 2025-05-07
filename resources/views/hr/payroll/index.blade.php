@@ -1,69 +1,72 @@
 @extends('layouts.admin')
 
-@section('title', 'Payroll Management')
+@section('title', 'Payroll Summary')
 
 @section('content')
 <div class="page-content">
     <div class="container-fluid">
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0">Payroll Management</h4>
+        <div class="row mb-4">
+            <div class="col-sm-6">
+                <h4 class="page-title">Payroll Summary ({{ $cutoff }} | {{ \Carbon\Carbon::parse($month)->format('F Y') }})</h4>
+            </div>
+            <div class="col-sm-6 text-sm-end">
+                <a href="{{ route('admin.hr.payroll.index') }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back to Cutoffs
+                </a>
+            </div>
         </div>
 
-        <form method="GET" class="row g-3 mb-4">
-            <div class="col-md-4">
-                <label for="month" class="form-label">Select Month:</label>
-                <input type="month" id="month" name="month" value="{{ $month }}" class="form-control" required>
-            </div>
-            <div class="col-md-2 align-self-end">
-                <button type="submit" class="btn btn-primary w-100">Show Cutoffs</button>
-            </div>
-        </form>
+        @php
+            $grouped = $employees->groupBy('department');
+        @endphp
 
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h5 class="mb-3">Cutoffs for {{ \Carbon\Carbon::parse($month)->format('F Y') }}</h5>
-
-                <table class="table table-bordered table-striped">
-                    <thead class="table-dark">
+        @foreach ($grouped as $department => $groupedEmployees)
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <strong>{{ $department ?? 'No Department' }}</strong>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="table table-bordered table-striped mb-0">
+                    <thead>
                         <tr>
-                            <th>Cutoff Period</th>
-                            <th class="text-center">Action</th>
+                            <th>Employee ID</th>
+                            <th>Full Name</th>
+                            <th>Total Hours</th>
+                            <th>Overtime (min)</th>
+                            <th>Late (min)</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @foreach ($groupedEmployees as $employee)
                         @php
-                            $yearMonth = \Carbon\Carbon::parse($month);
-                            $cutoff1Start = $yearMonth->copy()->startOfMonth();
-                            $cutoff1End = $yearMonth->copy()->startOfMonth()->addDays(14);
-                            $cutoff2Start = $yearMonth->copy()->startOfMonth()->addDays(15);
-                            $cutoff2End = $yearMonth->copy()->endOfMonth();
+                            $clock = $clockings[$employee->id] ?? null;
                         @endphp
-
                         <tr>
-                            <td>{{ $cutoff1Start->format('M d') }} - {{ $cutoff1End->format('M d, Y') }}</td>
-                            <td class="text-center">
-                                <a href="{{ route('admin.hr.payroll.view', ['month' => $month, 'cutoff' => '1-15']) }}"
-                                   class="btn btn-sm btn-primary" title="View 1st–15th payroll">
-                                    View
+                            <td>{{ $employee->employee_id }}</td>
+                            <td>{{ $employee->first_name }} {{ $employee->last_name }}</td>
+                            <td>{{ $clock->total_hours ?? 0 }}</td>
+                            <td>{{ $clock->total_overtime ?? 0 }}</td>
+                            <td>{{ $clock->total_late ?? 0 }}</td>
+                            <td class="text-end">
+                                <a href="#" class="btn btn-sm btn-info">
+                                    <i class="fas fa-receipt"></i> Generate Payslip
                                 </a>
                             </td>
                         </tr>
+                        @endforeach
 
+                        @if ($groupedEmployees->isEmpty())
                         <tr>
-                            <td>{{ $cutoff2Start->format('M d') }} - {{ $cutoff2End->format('M d, Y') }}</td>
-                            <td class="text-center">
-                                <a href="{{ route('admin.hr.payroll.view', ['month' => $month, 'cutoff' => '16-30']) }}"
-                                   class="btn btn-sm btn-primary" title="View 16th–end payroll">
-                                    View
-                                </a>
-                            </td>
+                            <td colspan="6" class="text-center">No employees found for this department.</td>
                         </tr>
-
+                        @endif
                     </tbody>
                 </table>
             </div>
         </div>
+        @endforeach
 
     </div>
 </div>
