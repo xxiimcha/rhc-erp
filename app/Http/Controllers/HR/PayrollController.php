@@ -52,4 +52,27 @@ class PayrollController extends Controller
             'end'
         ));
     }
+
+    public function compute($id, Request $request)
+    {
+        $cutoff = $request->get('cutoff');
+        $month = $request->get('month');
+
+        $employee = Employee::findOrFail($id);
+
+        return view('hr.payroll.compute', compact('employee', 'cutoff', 'month'));
+    }
+
+
+    public function payslip($id, Request $request)
+    {
+        $cutoff = $request->get('cutoff');
+        $month = $request->get('month');
+
+        $employee = Employee::findOrFail($id);
+
+        // Mock payslip data for now
+        return view('hr.payroll.payslip', compact('employee', 'cutoff', 'month'));
+    }
+
 }

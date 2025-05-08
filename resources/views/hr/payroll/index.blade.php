@@ -17,6 +17,13 @@
             </div>
         </div>
 
+        @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        @endif
+
         @php
             $grouped = $employees->groupBy('department');
         @endphp
@@ -50,7 +57,12 @@
                             <td>{{ $clock->total_overtime ?? 0 }}</td>
                             <td>{{ $clock->total_late ?? 0 }}</td>
                             <td class="text-end">
-                                <a href="#" class="btn btn-sm btn-info">
+                                <a href="{{ url('admin/hr/payroll/compute/' . $employee->id) }}?cutoff={{ $cutoff }}&month={{ $month }}"
+                                    class="btn btn-sm btn-warning me-1">
+                                    <i class="fas fa-calculator"></i> Compute
+                                </a>
+                                <a href="{{ url('admin/hr/payroll/payslip/' . $employee->id) }}?cutoff={{ $cutoff }}&month={{ $month }}"
+                                   class="btn btn-sm btn-info">
                                     <i class="fas fa-receipt"></i> Generate Payslip
                                 </a>
                             </td>

@@ -40,4 +40,9 @@ class Employee extends Model
     {
         return $this->hasOne(EmployeeSalary::class)->latestOfMany();
     }
+
+    public function activeSalary()
+    {
+        return $this->hasOne(EmployeeSalary::class)->where('status', 'active');
+    }
 }
