@@ -14,6 +14,8 @@ class PayrollController extends Controller
     public function index(Request $request)
     {
         $month = $request->get('month', now()->format('Y-m'));
+
+        // Simply load the cutoff selection page
         return view('hr.payroll.cutoffs', compact('month'));
     }
 
@@ -22,10 +24,12 @@ class PayrollController extends Controller
         $cutoff = $request->get('cutoff', '1-15');
         $month = $request->get('month', now()->format('Y-m'));
 
+        // Parse cutoff range
         [$start, $end] = $cutoff === '16-30'
             ? [Carbon::parse("$month-16"), Carbon::parse("$month")->endOfMonth()]
             : [Carbon::parse("$month-01"), Carbon::parse("$month-15")];
 
+        // Fetch summarized clocking data
         $clockings = Clocking::select(
                 'employee_id',
                 DB::raw('SUM(hours_worked) as total_hours'),
@@ -52,11 +56,15 @@ class PayrollController extends Controller
     public function compute($id, Request $request)
     {
         $cutoff = $request->get('cutoff');
+        $monthString = $request->get('month'); // expected: '2025-05'
+    
+        $employee = Employee::with('activeSalary')->findOrFail($id);
+    
+        // Parse base date from string for correct manipulation
         $month = $request->get('month');
         $monthBase = Carbon::createFromFormat('Y-m', $month);
-
-        $employee = Employee::with('activeSalary')->findOrFail($id);
-
+    
+        // Define cutoff start and end dates using correct month
         if ($cutoff === '16-30') {
             $start = $monthBase->copy()->day(16)->startOfDay();
             $end = $monthBase->copy()->endOfMonth()->endOfDay();
@@ -64,8 +72,8 @@ class PayrollController extends Controller
             $start = $monthBase->copy()->day(1)->startOfDay();
             $end = $monthBase->copy()->day(15)->endOfDay();
         }
-
-        // Working days (Mon–Fri)
+    
+        // Get all working days (Mon–Fri)
         $workingDays = collect();
         $date = $start->copy();
         while ($date->lte($end)) {
@@ -74,8 +82,8 @@ class PayrollController extends Controller
             }
             $date->addDay();
         }
-
-        // Attendance days
+    
+        // Get clocked in dates
         $attendanceDays = Clocking::where('employee_id', $id)
             ->whereBetween('time_in', [$start, $end])
             ->selectRaw('DATE(time_in) as date')
@@ -83,32 +91,28 @@ class PayrollController extends Controller
             ->pluck('date')
             ->map(fn($d) => Carbon::parse($d));
 
+    
+        // Count absent days by comparing
         $attendanceDates = $attendanceDays->map(fn($d) => $d->format('Y-m-d'));
 
         $daysAbsent = $workingDays->filter(function ($day) use ($attendanceDates) {
             return !$attendanceDates->contains($day->format('Y-m-d'));
-        })->count();
-
-        // Tardiness
+        });
+    
+        // Tardiness (sum of late_minutes)
         $totalLateMinutes = Clocking::where('employee_id', $id)
             ->whereBetween('time_in', [$start, $end])
             ->sum('late_minutes');
 
-        // Attendance logs for modal
-        $attendanceLogs = Clocking::where('employee_id', $id)
-            ->whereBetween('time_in', [$start, $end])
-            ->orderBy('time_in')
-            ->get();
-
         return view('hr.payroll.compute', compact(
             'employee',
             'cutoff',
-            'month',
+            'month', // ✅ this is now available as $month in Blade
             'daysAbsent',
-            'totalLateMinutes',
-            'attendanceLogs'
-        ));
+            'totalLateMinutes'
+        ));    
     }
+    
 
     public function payslip($id, Request $request)
     {
@@ -116,6 +120,9 @@ class PayrollController extends Controller
         $month = $request->get('month');
 
         $employee = Employee::findOrFail($id);
+
+        // Mock payslip data for now
         return view('hr.payroll.payslip', compact('employee', 'cutoff', 'month'));
     }
+
 }
