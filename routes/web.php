@@ -44,6 +44,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/', [EmployeeController::class, 'store'])->name('store');
         Route::get('/{id}', [EmployeeController::class, 'show'])->name('show');
         Route::post('/{id}/rfid', [EmployeeController::class, 'storeRfid'])->name('rfid.store');
+        Route::post('{id}/salary', [EmployeeController::class, 'storeSalary'])->name('salary.store');
     });
 
     // HR → Attendance Tracking

@@ -20,6 +20,7 @@
                     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#attendance">Attendance</button></li>
                     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#leaves">Leaves</button></li>
                     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">Documents</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salary">Salary</button></li>
                 </ul>
 
                 <div class="tab-content">
@@ -39,6 +40,7 @@
                                 <p><strong>Department:</strong> {{ $employee->department }}</p>
                                 <p><strong>Employment Type:</strong> {{ ucfirst($employee->employment_type) }}</p>
                                 <p><strong>Date Hired:</strong> {{ $employee->date_hired }}</p>
+                                <p><strong>Monthly Salary:</strong> ₱{{ number_format($employee->latestSalary?->amount ?? 0, 2) }}</p>
                                 <hr>
                                 <p><strong>PhilHealth No:</strong> {{ $employee->philhealth_no }}</p>
                                 <p><strong>SSS No:</strong> {{ $employee->sss_no }}</p>
@@ -135,6 +137,44 @@
                     <div class="tab-pane fade" id="documents">
                         <p>Uploaded employee documents will go here.</p>
                     </div>
+
+                    {{-- Salary Tab --}}
+                    <div class="tab-pane fade" id="salary">
+                        <div class="d-flex justify-content-end mb-3">
+                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#salaryModal">
+                                <i class="fas fa-plus"></i> Add Salary
+                            </button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered text-center">
+                                <thead class="table-success">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Amount (₱)</th>
+                                        <th>Status</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($employee->salaries as $salary)
+                                        <tr>
+                                            <td>{{ $salary->created_at->format('M d, Y') }}</td>
+                                            <td>₱{{ number_format($salary->amount, 2) }}</td>
+                                            <td>
+                                                <span class="badge {{ $salary->status === 'active' ? 'bg-success' : 'bg-secondary' }}">
+                                                    {{ ucfirst($salary->status) }}
+                                                </span>
+                                            </td>
+                                            <td>{{ $salary->remarks }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="4">No salary records found.</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -173,13 +213,46 @@
     </div>
 </div>
 
+{{-- Salary Modal --}}
+<div class="modal fade" id="salaryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ route('admin.hr.employees.salary.store', $employee->id) }}" method="POST" class="modal-content">
+            @csrf
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Add Salary Record</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Salary Amount (₱)</label>
+                    <input type="number" name="amount" class="form-control" required step="0.01" min="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-control" required>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Remarks</label>
+                    <input type="text" name="remarks" class="form-control" placeholder="e.g. Initial, Adjustment, Bonus">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('editAttendanceModal');
 
     modal.addEventListener('show.bs.modal', function (event) {
         const button = event.relatedTarget;
-        const date = button.getAttribute('data-date'); // Format: YYYY-MM-DD
+        const date = button.getAttribute('data-date');
         const employee = button.getAttribute('data-employee');
         const timeIn = button.getAttribute('data-timein');
         const timeOut = button.getAttribute('data-timeout');

@@ -30,4 +30,14 @@ class Employee extends Model
         'tin_no',
         'rfid_number'
     ];
+
+    public function salaries()
+    {
+        return $this->hasMany(EmployeeSalary::class);
+    }
+
+    public function latestSalary()
+    {
+        return $this->hasOne(EmployeeSalary::class)->latestOfMany();
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\HR;
 use App\Http\Controllers\Controller;
 use App\Models\Clocking;
 use App\Models\Employee;
+use App\Models\EmployeeSalary;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -94,4 +95,29 @@ class EmployeeController extends Controller
 
         return redirect()->route('admin.hr.employees.index')->with('success', 'Employee created.');
     }
+
+    public function storeSalary(Request $request, $id)
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0',
+            'status' => 'required|in:active,inactive',
+            'remarks' => 'nullable|string|max:255',
+        ]);
+
+        // Ensure only one active salary per employee
+        if ($request->status === 'active') {
+            EmployeeSalary::where('employee_id', $id)->update(['status' => 'inactive']);
+        }
+
+        EmployeeSalary::create([
+            'employee_id' => $id,
+            'amount' => $request->amount,
+            'rate_type' => 'fixed',
+            'status' => $request->status,
+            'remarks' => $request->remarks,
+        ]);
+
+        return back()->with('success', 'Salary record added.');
+    }
+
 }
