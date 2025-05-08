@@ -33,7 +33,8 @@
                         </div>
                         <div class="col-md-4">
                             <label>Month</label>
-                            <input type="text" class="form-control" value="{{ \Carbon\Carbon::parse($month)->format('F Y') }}" readonly>
+                            <input type="text" class="form-control" value="{{ \Carbon\Carbon::createFromFormat('Y-m', $month)->format('F Y') }}" readonly>
+
                         </div>
                     </div>
 
@@ -48,11 +49,11 @@
                         </div>
                         <div class="col-md-3">
                             <label>Rate/Day</label>
-                            <input type="number" name="rate_per_day" class="form-control">
+                            <input type="number" step="0.01" id="ratePerDay" name="rate_per_day" class="form-control" readonly>
                         </div>
                         <div class="col-md-3">
                             <label>15-Day Pay</label>
-                            <input type="number" name="half_month_pay" class="form-control">
+                            <input type="number" step="0.01" id="halfMonthPay" name="half_month_pay" class="form-control" readonly>
                         </div>
                         <div class="col-md-3">
                             <label>Allowance</label>
@@ -68,15 +69,15 @@
                         </div>
                         <div class="col-md-3">
                             <label>Days Absent</label>
-                            <input type="number" name="days_absent" class="form-control">
+                            <input type="number" name="days_absent" class="form-control" value="{{ $daysAbsent ?? 0 }}" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label>Leave Hours / Tardiness</label>
+                            <input type="number" name="leave_hours" class="form-control" value="{{ $totalLateMinutes ?? 0 }}" readonly>
                         </div>
                         <div class="col-md-3">
                             <label>RND</label>
                             <input type="number" name="rnd" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <label>Leave Hours</label>
-                            <input type="number" name="leave_hours" class="form-control">
                         </div>
                     </div>
 
@@ -131,4 +132,24 @@
 
     </div>
 </div>
+
+<script>
+    function calculateDerivedFields() {
+        const basicPay = parseFloat(document.querySelector('[name="basic_pay"]').value) || 0;
+        const ratePerDay = (basicPay * 12) / 261;
+        const halfMonthPay = basicPay / 2;
+
+        document.getElementById('ratePerDay').value = ratePerDay.toFixed(2);
+        document.getElementById('halfMonthPay').value = halfMonthPay.toFixed(2);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const basicPayInput = document.querySelector('[name="basic_pay"]');
+        basicPayInput.addEventListener('input', calculateDerivedFields);
+
+        // Run on page load in case of pre-filled values
+        calculateDerivedFields();
+    });
+</script>
+
 @endsection
