@@ -80,11 +80,15 @@
                             <label class="form-label">Department</label>
                             <select name="department" class="form-select" required>
                                 <option value="">Select Department</option>
-                                <option value="Human Resources">Human Resources</option>
-                                <option value="Finance">Finance</option>
-                                <option value="IT">IT</option>
+                                <option value="MIS">MIS</option>
+                                <option value="Franchise/FSG">Franchise/FSG</option>
+                                <option value="Accounting">Accounting</option>
+                                <option value="BWES">BWES</option>
+                                <option value="Maintenance">Maintenance</option>
+                                <option value="Executive">Executive</option>
                                 <option value="Marketing">Marketing</option>
-                                <option value="Operations">Operations</option>
+                                <option value="RSC">RSC</option>
+                                <option value="Company Own">Company Own</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
@@ -156,6 +160,13 @@
 </div>
 
 <script>
+// Capitalize all letters for name inputs
+document.querySelectorAll('input[name="first_name"], input[name="middle_name"], input[name="last_name"], input[name="suffix"]').forEach(input => {
+    input.addEventListener('input', function () {
+        this.value = this.value.toUpperCase();
+    });
+});
+
 document.getElementById('employeeForm').addEventListener('submit', function(e) {
     e.preventDefault();
 

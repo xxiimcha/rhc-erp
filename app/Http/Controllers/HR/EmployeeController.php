@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\EmployeeSalary;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Models\User;
 
 class EmployeeController extends Controller
 {
@@ -67,12 +68,12 @@ class EmployeeController extends Controller
             'employment_type' => 'required',
             'date_hired' => 'required|date',
         ]);
-
+    
         $year = date('Y', strtotime($request->date_hired));
         $count = Employee::whereYear('date_hired', $year)->count() + 1;
-        $employeeId = $year . str_pad($count, 3, '0', STR_PAD_LEFT); // removed 'EMP' and '-'
-
-        Employee::create([
+        $employeeId = $year . str_pad($count, 3, '0', STR_PAD_LEFT);
+    
+        $employee = Employee::create([
             'employee_id' => $employeeId,
             'first_name' => $request->first_name,
             'middle_name' => $request->middle_name,
@@ -92,9 +93,19 @@ class EmployeeController extends Controller
             'pagibig_no' => $request->pagibig_no,
             'tin_no' => $request->tin_no,
         ]);
-
-        return redirect()->route('admin.hr.employees.index')->with('success', 'Employee created.');
-    }
+    
+        // Auto-create user account
+        User::create([
+            'name' => $request->first_name . ' ' . $request->last_name,
+            'username' => $employeeId,
+            'email' => $employeeId, // use employeeId as both email and username if required
+            'password' => bcrypt($employeeId),
+            'role' => 'employee',
+            'is_active' => 1,
+        ]);        
+    
+        return redirect()->route('admin.hr.employees.index')->with('success', 'Employee and user account created.');
+    }    
 
     public function storeSalary(Request $request, $id)
     {
