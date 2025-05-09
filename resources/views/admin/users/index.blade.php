@@ -32,17 +32,19 @@
                     <li class="nav-item">
                         <a class="nav-link" id="employee-tab" data-bs-toggle="tab" href="#employee" role="tab">Employees</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="sysadmin-tab" data-bs-toggle="tab" href="#sysadmin" role="tab">System Administrators</a>
+                    </li>
                 </ul>
 
                 {{-- Tab Content --}}
                 <div class="tab-content mt-3" id="userTabsContent">
-                    {{-- Admin Tab --}}
                     <div class="tab-pane fade show active" id="admin" role="tabpanel">
                         <table class="table table-bordered table-striped dt-responsive nowrap" id="adminTable" style="width:100%">
                             <thead>
                                 <tr>
                                     <th>Name</th>
-                                    <th>Email</th>
+                                    <th>Username</th>
                                     <th>Role</th>
                                     <th>Status</th>
                                     <th class="text-center">Actions</th>
@@ -56,13 +58,12 @@
                         </table>
                     </div>
 
-                    {{-- Employee Tab --}}
                     <div class="tab-pane fade" id="employee" role="tabpanel">
                         <table class="table table-bordered table-striped dt-responsive nowrap" id="employeeTable" style="width:100%">
                             <thead>
                                 <tr>
                                     <th>Name</th>
-                                    <th>Email</th>
+                                    <th>Username</th>
                                     <th>Role</th>
                                     <th>Status</th>
                                     <th class="text-center">Actions</th>
@@ -70,6 +71,25 @@
                             </thead>
                             <tbody>
                                 @foreach ($users->where('role', 'employee') as $user)
+                                    @include('admin.users.partials.user_row')
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="tab-pane fade" id="sysadmin" role="tabpanel">
+                        <table class="table table-bordered table-striped dt-responsive nowrap" id="sysadminTable" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($users->where('role', 'system_admin') as $user)
                                     @include('admin.users.partials.user_row')
                                 @endforeach
                             </tbody>
@@ -90,22 +110,29 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" name="role" value="admin">
                     <div class="mb-3">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" class="form-control" name="name" required>
+                        <label class="form-label">First Name</label>
+                        <input type="text" class="form-control" name="first_name" id="firstName" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-control" name="email" required>
+                        <label class="form-label">Last Name</label>
+                        <input type="text" class="form-control" name="last_name" id="lastName" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <input type="password" class="form-control" name="password" required>
+                        <label class="form-label">Username (Auto-generated)</label>
+                        <input type="text" class="form-control" name="username" id="generatedUsername" readonly required>
+                        <small class="text-muted">Password will be the same as the username.</small>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <select name="role" id="roleSelect" class="form-select" required>
+                            <option value="admin">Admin</option>
+                            <option value="system_admin">System Administrator</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="departmentField">
                         <label class="form-label">Department</label>
-                        <select name="department" class="form-select" required>
+                        <select name="department" class="form-select">
                             @foreach ($departments as $dept)
                                 <option value="{{ $dept }}">{{ $dept }}</option>
                             @endforeach
@@ -129,11 +156,39 @@
 
 <script>
     $(document).ready(function () {
-        $('#adminTable, #employeeTable').DataTable({
+        $('#adminTable, #employeeTable, #sysadminTable').DataTable({
             responsive: true,
             pageLength: 10,
             columnDefs: [{ orderable: false, targets: -1 }]
         });
+
+        function toggleDepartmentField() {
+            const selectedRole = $('#roleSelect').val();
+            if (selectedRole === 'system_admin') {
+                $('#departmentField').hide();
+            } else {
+                $('#departmentField').show();
+            }
+        }
+
+        function generateUsername() {
+            const first = $('#firstName').val().trim().toUpperCase();
+            const last = $('#lastName').val().trim().toUpperCase();
+            if (first && last) {
+                const username = first.charAt(0) + last.replace(/\s+/g, '');
+                $('#generatedUsername').val(username);
+            } else {
+                $('#generatedUsername').val('');
+            }
+        }
+
+        // Initial logic
+        toggleDepartmentField();
+        generateUsername();
+
+        // Bind events
+        $('#roleSelect').on('change', toggleDepartmentField);
+        $('#firstName, #lastName').on('input', generateUsername);
     });
 </script>
 @endsection
