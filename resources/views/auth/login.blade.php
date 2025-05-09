@@ -56,14 +56,14 @@
                                 </div>
                             @endif
 
-                            <form method="POST" action="">
+                            <form method="POST" action="{{ route('login.submit') }}">
                                 @csrf
 
                                 <div class="input-group auth-form-group-custom mb-3">
                                     <span class="input-group-text bg-primary bg-opacity-10 fs-16">
                                         <i class="mdi mdi-account-outline"></i>
                                     </span>
-                                    <input type="email" class="form-control" name="email" placeholder="Enter email" value="{{ old('email') }}" required autofocus>
+                                    <input type="text" class="form-control" name="username" placeholder="Enter username" value="{{ old('username') }}" required autofocus>
                                 </div>
 
                                 <div class="input-group auth-form-group-custom mb-3">

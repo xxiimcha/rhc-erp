@@ -24,7 +24,7 @@
 
         <div class="d-flex justify-content-between menu-sm px-3 ms-auto">
             <div class="d-flex align-items-center gap-2">
-                <!-- Dropdowns omitted for brevity (Apps and Features) -->
+                <!-- Optional dropdowns -->
             </div>
 
             <div class="d-flex align-items-center gap-2">
@@ -57,7 +57,6 @@
                                     </div>
                                 </div>
                             </a>
-                            <!-- More notification items as needed -->
                         </div>
                         <div class="p-2 border-top text-center">
                             <a class="btn btn-sm btn-link text-muted" href="#"><i class="mdi mdi-arrow-right-circle me-1"></i> View More..</a>
@@ -74,7 +73,10 @@
                         <a class="dropdown-item" href="#"><i class="far fa-address-card me-2"></i> Profile</a>
                         <a class="dropdown-item" href="#"><i class="far fa-comments me-2"></i> Messages</a>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item text-danger" href="{{ url('auth-login') }}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt me-2"></i> Logout</button>
+                        </form>
                     </div>
                 </div>
             </div>
