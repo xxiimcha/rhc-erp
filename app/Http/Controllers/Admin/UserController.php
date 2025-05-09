@@ -21,8 +21,10 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => bcrypt($request->password),
             'role' => $request->role,
+            'department' => $request->department,
             'is_active' => 1,
         ]);
+
         return redirect()->back()->with('success', 'User added.');
     }
 
@@ -31,7 +33,9 @@ class UserController extends Controller
         $user = User::findOrFail($id);
         $user->update($request->except('password') + [
             'password' => $request->password ? bcrypt($request->password) : $user->password,
+            'department' => $request->department,
         ]);
+
         return redirect()->back()->with('success', 'User updated.');
     }
 
