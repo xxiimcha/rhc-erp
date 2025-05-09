@@ -5,11 +5,24 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class LoginController extends Controller
 {
     public function showLoginForm()
     {
+        // Check if a system_admin exists
+        if (!\App\Models\User::where('role', 'system_admin')->exists()) {
+            \App\Models\User::create([
+                'name' => 'System Administrator',
+                'username' => 'SYSADMIN',
+                'email' => 'sysadmin@localhost.com', // <- required field
+                'password' => bcrypt('SYSADMIN'),
+                'role' => 'system_admin',
+                'is_active' => 1,
+            ]);
+        }
+
         return view('auth.login');
     }
 
