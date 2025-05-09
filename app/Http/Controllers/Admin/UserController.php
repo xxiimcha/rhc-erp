@@ -18,39 +18,50 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'first_name' => 'required',
-            'last_name' => 'required',
-            'username' => 'required|unique:users,username',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'username' => 'required|string|unique:users,username|max:255',
             'role' => 'required|in:admin,system_admin',
+            'department' => 'required_if:role,admin|array',
+            'department.*' => 'string'
         ]);
-    
+
         $name = strtoupper($request->first_name . ' ' . $request->last_name);
         $username = strtoupper($request->username);
         $role = $request->role;
-        $department = $role === 'admin' ? $request->department : null;
-    
+
+        // Store departments as comma-separated if admin; null otherwise
+        $department = $role === 'admin' ? implode(',', $request->department) : null;
+
         User::create([
             'name' => $name,
             'username' => $username,
-            'email' => $username, // optional or use a placeholder
-            'password' => bcrypt($username), // password = username
+            'email' => $username, // optional or replace with real email
+            'password' => bcrypt($username), // default password is username
             'role' => $role,
             'department' => $department,
             'is_active' => 1,
         ]);
-    
+
         return redirect()->back()->with('success', "User created. Username & Password: $username");
-    }    
+    }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, User $user)
     {
-        $user = User::findOrFail($id);
-        $user->update($request->except('password') + [
-            'password' => $request->password ? bcrypt($request->password) : $user->password,
-            'department' => $request->department,
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'department' => 'required|array',
+            'department.*' => 'string',
+            'is_active' => 'required|in:0,1'
         ]);
-
-        return redirect()->back()->with('success', 'User updated.');
+    
+        $user->update([
+            'name' => strtoupper($request->name),
+            'department' => implode(',', $request->department),
+            'is_active' => $request->is_active,
+        ]);
+    
+        return redirect()->back()->with('success', 'User updated successfully.');
     }
 
     public function destroy($id)

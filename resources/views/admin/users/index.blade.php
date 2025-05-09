@@ -45,7 +45,7 @@
                                 <tr>
                                     <th>Name</th>
                                     <th>Username</th>
-                                    <th>Role</th>
+                                    <th>Department(s)</th>
                                     <th>Status</th>
                                     <th class="text-center">Actions</th>
                                 </tr>
@@ -131,13 +131,15 @@
                         </select>
                     </div>
                     <div class="mb-3" id="departmentField">
-                        <label class="form-label">Department</label>
-                        <select name="department" class="form-select">
+                        <label class="form-label">Department(s)</label>
+                        <select name="department[]" class="form-select" multiple required>
                             @foreach ($departments as $dept)
                                 <option value="{{ $dept }}">{{ $dept }}</option>
                             @endforeach
                         </select>
+                        <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple.</small>
                     </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-success">Create User</button>

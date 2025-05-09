@@ -1,7 +1,7 @@
 <tr>
     <td>{{ $user->name }}</td>
     <td>{{ $user->email }}</td>
-    <td>{{ ucfirst($user->role) }}</td>
+    <td>{{ str_replace(',', ', ', $user->department) }}</td>
     <td>
         <span class="badge bg-{{ $user->is_active ? 'success' : 'secondary' }}">
             {{ $user->is_active ? 'Active' : 'Inactive' }}
