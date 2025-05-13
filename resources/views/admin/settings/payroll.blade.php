@@ -23,63 +23,64 @@
                 <div class="tab-content pt-3">
                     {{-- General Settings --}}
                     <div class="tab-pane fade show active" id="basic" role="tabpanel">
-                        {{-- Inside <div class="tab-pane fade show active" id="basic" role="tabpanel"> --}}
                         <form action="{{ route('admin.settings.payroll.update') }}" method="POST">
                             @csrf
                             <div class="row">
                                 <div class="col-md-4 mb-3">
                                     <label>OT Multiplier</label>
-                                    <input type="number" step="0.01" name="ot_multiplier" value="{{ old('ot_multiplier', $settings->ot_multiplier ?? '') }}" class="form-control" required>
+                                    <input type="number" step="0.01" name="ot_multiplier" value="{{ old('ot_multiplier', $settings->ot_multiplier ?? '') }}" class="form-control" readonly required>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label>Late Deduction per Minute</label>
-                                    <input type="number" step="0.01" name="late_deduction" value="{{ old('late_deduction', $settings->late_deduction ?? '') }}" class="form-control" required>
+                                    <input type="number" step="0.01" name="late_deduction" value="{{ old('late_deduction', $settings->late_deduction ?? '') }}" class="form-control" readonly required>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label>PhilHealth %</label>
-                                    <input type="number" step="0.01" name="philhealth_rate" value="{{ old('philhealth_rate', $settings->philhealth_rate ?? '') }}" class="form-control" required>
+                                    <input type="number" step="0.01" name="philhealth_rate" value="{{ old('philhealth_rate', $settings->philhealth_rate ?? '') }}" class="form-control" readonly required>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label>Pag-IBIG %</label>
-                                    <input type="number" step="0.01" name="pagibig_rate" value="{{ old('pagibig_rate', $settings->pagibig_rate ?? '') }}" class="form-control" required>
+                                    <input type="number" step="0.01" name="pagibig_rate" value="{{ old('pagibig_rate', $settings->pagibig_rate ?? '') }}" class="form-control" readonly required>
                                 </div>
-
-                                {{-- New Fields --}}
                                 <div class="col-md-4 mb-3">
                                     <label>Regular Holiday Rate</label>
-                                    <input type="number" step="0.01" name="regular_holiday_rate" value="{{ old('regular_holiday_rate', $settings->regular_holiday_rate ?? '2.00') }}" class="form-control">
+                                    <input type="number" step="0.01" name="regular_holiday_rate" value="{{ old('regular_holiday_rate', $settings->regular_holiday_rate ?? '2.00') }}" class="form-control" readonly>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label>Special Holiday Rate</label>
-                                    <input type="number" step="0.01" name="special_holiday_rate" value="{{ old('special_holiday_rate', $settings->special_holiday_rate ?? '1.30') }}" class="form-control">
+                                    <input type="number" step="0.01" name="special_holiday_rate" value="{{ old('special_holiday_rate', $settings->special_holiday_rate ?? '1.30') }}" class="form-control" readonly>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label>Rest Day Rate</label>
-                                    <input type="number" step="0.01" name="rest_day_rate" value="{{ old('rest_day_rate', $settings->rest_day_rate ?? '1.50') }}" class="form-control">
+                                    <input type="number" step="0.01" name="rest_day_rate" value="{{ old('rest_day_rate', $settings->rest_day_rate ?? '1.50') }}" class="form-control" readonly>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label>Night Differential (%)</label>
-                                    <input type="number" step="0.01" name="night_diff_percent" value="{{ old('night_diff_percent', $settings->night_diff_percent ?? '10') }}" class="form-control">
+                                    <input type="number" step="0.01" name="night_diff_percent" value="{{ old('night_diff_percent', $settings->night_diff_percent ?? '10') }}" class="form-control" readonly>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label>Monthly Working Days</label>
-                                    <input type="number" name="monthly_working_days" value="{{ old('monthly_working_days', $settings->monthly_working_days ?? '22') }}" class="form-control">
+                                    <input type="number" name="monthly_working_days" value="{{ old('monthly_working_days', $settings->monthly_working_days ?? '22') }}" class="form-control" readonly>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label>Monthly Working Hours</label>
-                                    <input type="number" name="monthly_working_hours" value="{{ old('monthly_working_hours', $settings->monthly_working_hours ?? '176') }}" class="form-control">
+                                    <input type="number" name="monthly_working_hours" value="{{ old('monthly_working_hours', $settings->monthly_working_hours ?? '176') }}" class="form-control" readonly>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label>13th Month Base (Months)</label>
-                                    <input type="number" name="thirteenth_month_base" value="{{ old('thirteenth_month_base', $settings->thirteenth_month_base ?? '12') }}" class="form-control">
+                                    <input type="number" name="thirteenth_month_base" value="{{ old('thirteenth_month_base', $settings->thirteenth_month_base ?? '12') }}" class="form-control" readonly>
                                 </div>
                             </div>
 
                             <div class="text-end mt-3">
-                                <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Save</button>
+                                <button type="button" id="editSettingsBtn" class="btn btn-warning">
+                                    <i class="fas fa-edit"></i> Update Settings
+                                </button>
+                                <button type="submit" id="saveSettingsBtn" class="btn btn-success d-none">
+                                    <i class="fas fa-save"></i> Save
+                                </button>
                             </div>
                         </form>
-
                     </div>
 
                     {{-- SSS Bracket Table --}}
@@ -153,9 +154,20 @@
                         </form>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.getElementById('editSettingsBtn').addEventListener('click', function () {
+        const inputs = document.querySelectorAll('#basic input');
+        inputs.forEach(input => input.removeAttribute('readonly'));
+
+        this.classList.add('d-none');
+        document.getElementById('saveSettingsBtn').classList.remove('d-none');
+    });
+</script>
+@endpush
 @endsection
