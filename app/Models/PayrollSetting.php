@@ -6,16 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class PayrollSetting extends Model
 {
-    protected $table = 'payroll_settings';
-
     protected $fillable = [
-        'daily_rate',
-        'sss_rate',
-        'pagibig_rate',
-        'philhealth_rate',
         'ot_multiplier',
         'late_deduction',
+        'philhealth_rate',
+        'pagibig_rate',
+        'regular_holiday_rate',
+        'special_holiday_rate',
+        'rest_day_rate',
+        'night_diff_percent',
+        'rate_ots',
+        'monthly_working_days',
+        'monthly_working_hours',
+        'thirteenth_month_base',
+        'daily_rate',
     ];
-
-    public $timestamps = true;
 }
