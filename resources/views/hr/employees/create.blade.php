@@ -160,6 +160,32 @@
 </div>
 
 <script>
+function formatInput(input, pattern) {
+    input.addEventListener('input', function (e) {
+        let value = input.value.replace(/\D/g, ''); // Remove non-digits
+        let formatted = '';
+        let i = 0;
+        for (let char of pattern) {
+            if (char === 'X') {
+                if (value[i]) {
+                    formatted += value[i++];
+                } else {
+                    break;
+                }
+            } else {
+                formatted += char;
+            }
+        }
+        input.value = formatted;
+    });
+}
+
+// Apply masks
+formatInput(document.querySelector('input[name="philhealth_no"]'), 'XX-XXXXXXXXX-X');
+formatInput(document.querySelector('input[name="sss_no"]'), 'XX-XXXXXXX-X');
+formatInput(document.querySelector('input[name="pagibig_no"]'), 'XXXX-XXXX-XXXX');
+formatInput(document.querySelector('input[name="tin_no"]'), 'XXX-XXX-XXX');
+
 // Capitalize all letters for name inputs
 document.querySelectorAll('input[name="first_name"], input[name="middle_name"], input[name="last_name"], input[name="suffix"]').forEach(input => {
     input.addEventListener('input', function () {

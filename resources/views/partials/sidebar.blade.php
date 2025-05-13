@@ -27,6 +27,7 @@
                     @include('partials.sidebar.compliance')
                     @include('partials.sidebar.franchise')
                     @include('partials.sidebar.users')
+                    @include('partials.sidebar.settings')
 
                 @else
 
