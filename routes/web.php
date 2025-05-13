@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\PayrollSettingController;
 use App\Http\Controllers\HR\EmployeeController;
 use App\Http\Controllers\HR\AttendanceController;
 use App\Http\Controllers\HR\PayrollController;
@@ -24,7 +25,7 @@ Route::get('/dashboard', function () {
 
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
-
+    
     // User Management
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
@@ -60,6 +61,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/view', [PayrollController::class, 'view'])->name('view'); // shows per-employee payroll
         Route::get('/compute/{id}', [PayrollController::class, 'compute'])->name('compute');
         Route::get('/payslip/{id}', [PayrollController::class, 'payslip'])->name('payslip');
+    });
+
+    //Settings
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/payroll', [PayrollSettingController::class, 'edit'])->name('payroll');
+        Route::post('/payroll', [PayrollSettingController::class, 'update'])->name('payroll.update');
     });
 });
 
