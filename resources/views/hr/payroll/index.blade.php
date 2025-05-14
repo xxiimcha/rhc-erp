@@ -26,6 +26,7 @@
 
         @php
             $grouped = $employees->groupBy('department');
+            $cutoffDate = \Carbon\Carbon::parse($month . '-01'); // reference date for filtering
         @endphp
 
         @foreach ($grouped as $department => $groupedEmployees)
@@ -46,7 +47,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($groupedEmployees as $employee)
+                        @php
+                            $validEmployees = $groupedEmployees->filter(function ($employee) use ($cutoffDate) {
+                                return \Carbon\Carbon::parse($employee->date_hired)->lessThanOrEqualTo($cutoffDate);
+                            });
+                        @endphp
+
+                        @forelse ($validEmployees as $employee)
                         @php
                             $clock = $clockings[$employee->id] ?? null;
                         @endphp
@@ -67,13 +74,11 @@
                                 </a>
                             </td>
                         </tr>
-                        @endforeach
-
-                        @if ($groupedEmployees->isEmpty())
+                        @empty
                         <tr>
-                            <td colspan="6" class="text-center">No employees found for this department.</td>
+                            <td colspan="6" class="text-center">No employees eligible for this cutoff period.</td>
                         </tr>
-                        @endif
+                        @endforelse
                     </tbody>
                 </table>
             </div>
