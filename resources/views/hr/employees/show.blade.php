@@ -24,158 +24,23 @@
                 </ul>
 
                 <div class="tab-content">
-                    {{-- Profile Tab --}}
                     <div class="tab-pane fade show active" id="profile">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><strong>Full Name:</strong> {{ $employee->first_name }} {{ $employee->middle_name }} {{ $employee->last_name }}</p>
-                                <p><strong>Email:</strong> {{ $employee->email }}</p>
-                                <p><strong>Contact Number:</strong> {{ $employee->contact_number }}</p>
-                                <p><strong>Gender:</strong> {{ ucfirst($employee->gender) }}</p>
-                                <p><strong>Date of Birth:</strong> {{ $employee->date_of_birth }}</p>
-                                <p><strong>Address:</strong> {{ $employee->address }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p><strong>Position:</strong> {{ $employee->position }}</p>
-                                <p><strong>Department:</strong> {{ $employee->department }}</p>
-                                <p><strong>Employment Type:</strong> {{ ucfirst($employee->employment_type) }}</p>
-                                <p><strong>Date Hired:</strong> {{ $employee->date_hired }}</p>
-                                <p><strong>Monthly Salary:</strong> ₱{{ number_format($employee->latestSalary?->amount ?? 0, 2) }}</p>
-                                <hr>
-                                <p><strong>PhilHealth No:</strong> {{ $employee->philhealth_no }}</p>
-                                <p><strong>SSS No:</strong> {{ $employee->sss_no }}</p>
-                                <p><strong>Pag-IBIG No:</strong> {{ $employee->pagibig_no }}</p>
-                                <p><strong>TIN No:</strong> {{ $employee->tin_no }}</p>
-                            </div>
-                        </div>
+                        @include('hr.employees.tabs.profile')
                     </div>
-
-                    {{-- Attendance Tab --}}
                     <div class="tab-pane fade" id="attendance">
-                        <form method="GET" class="mb-3">
-                            <label for="month">Select Month:</label>
-                            <input type="month" name="month" id="month" value="{{ $month }}" onchange="this.form.submit()" class="form-control w-auto d-inline-block">
-                        </form>
-
-                        <div class="table-responsive">
-                            <table class="table table-bordered text-center align-middle">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Day</th>
-                                        <th>Time In</th>
-                                        <th>Time Out</th>
-                                        <th>Status</th>
-                                        <th>Late (min)</th>
-                                        <th>Overtime (min)</th>
-                                        <th>Hours Worked</th>
-                                        <th>Remarks</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @for ($d = 1; $d <= \Carbon\Carbon::parse($month)->daysInMonth; $d++)
-                                        @php
-                                            $date = \Carbon\Carbon::parse($month)->startOfMonth()->addDays($d - 1);
-                                            $dateStr = $date->format('Y-m-d');
-                                            $record = $clockings[$dateStr][0] ?? null;
-                                            $isAbsent = !$record && $date->isPast();
-                                            $holiday = $holidays[$dateStr] ?? null;
-                                            $isCurrentMonth = $date->format('Y-m') === now()->format('Y-m');
-                                        @endphp
-                                        <tr class="{{ $isAbsent ? 'table-danger' : '' }} {{ $holiday ? 'table-info' : '' }}">
-                                            <td>{{ $date->format('M d, Y') }}</td>
-                                            <td>{{ $date->format('l') }}</td>
-                                            <td>{{ $record?->time_in ? \Carbon\Carbon::parse($record->time_in)->format('h:i A') : '-' }}</td>
-                                            <td>{{ $record?->time_out ? \Carbon\Carbon::parse($record->time_out)->format('h:i A') : '-' }}</td>
-                                            <td>
-                                                @if ($record)
-                                                    <span class="badge {{ $record->status === 'late' ? 'bg-danger' : 'bg-success' }}">{{ ucfirst($record->status) }}</span>
-                                                @elseif($isAbsent)
-                                                    <span class="badge bg-warning text-dark">Absent</span>
-                                                @else
-                                                    -
-                                                @endif
-                                            </td>
-                                            <td>{{ $record->late_minutes ?? ($isAbsent ? 0 : '-') }}</td>
-                                            <td>{{ $record->overtime_minutes ?? ($isAbsent ? 0 : '-') }}</td>
-                                            <td>{{ $record->hours_worked ?? ($isAbsent ? 0 : '-') }}</td>
-                                            <td>
-                                                @if ($holiday)
-                                                    <span class="badge bg-primary">{{ $holiday['localName'] }} ({{ $holiday['type'] }})</span>
-                                                @else
-                                                    -
-                                                @endif
-                                            </td>
-                                            <td>
-                                                @if ($isCurrentMonth)
-                                                    <button type="button"
-                                                            class="btn btn-sm btn-outline-primary"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#editAttendanceModal"
-                                                            data-date="{{ $dateStr }}"
-                                                            data-employee="{{ $employee->employee_id }}"
-                                                            data-timein="{{ $record?->time_in }}"
-                                                            data-timeout="{{ $record?->time_out }}">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endfor
-                                </tbody>
-                            </table>
-                        </div>
+                        @include('hr.employees.tabs.attendance')
                     </div>
-
-                    {{-- Leaves Tab --}}
                     <div class="tab-pane fade" id="leaves">
-                        <p>Leave records will go here.</p>
+                        @include('hr.employees.tabs.leaves')
                     </div>
-
-                    {{-- Documents Tab --}}
                     <div class="tab-pane fade" id="documents">
-                        <p>Uploaded employee documents will go here.</p>
+                        @include('hr.employees.tabs.documents')
                     </div>
-
-                    {{-- Salary Tab --}}
                     <div class="tab-pane fade" id="salary">
-                        <div class="d-flex justify-content-end mb-3">
-                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#salaryModal">
-                                <i class="fas fa-plus"></i> Add Salary
-                            </button>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table table-bordered text-center">
-                                <thead class="table-success">
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Amount (₱)</th>
-                                        <th>Status</th>
-                                        <th>Remarks</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($employee->salaries as $salary)
-                                        <tr>
-                                            <td>{{ $salary->created_at->format('M d, Y') }}</td>
-                                            <td>₱{{ number_format($salary->amount, 2) }}</td>
-                                            <td>
-                                                <span class="badge {{ $salary->status === 'active' ? 'bg-success' : 'bg-secondary' }}">
-                                                    {{ ucfirst($salary->status) }}
-                                                </span>
-                                            </td>
-                                            <td>{{ $salary->remarks }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr><td colspan="4">No salary records found.</td></tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
+                        @include('hr.employees.tabs.salary')
                     </div>
                 </div>
+
             </div>
         </div>
 

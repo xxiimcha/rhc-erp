@@ -28,7 +28,8 @@ class Employee extends Model
         'sss_no',
         'pagibig_no',
         'tin_no',
-        'rfid_number'
+        'rfid_number',
+        'photo_path'
     ];
 
     public function salaries()

@@ -12,6 +12,7 @@ use App\Models\User;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class EmployeeController extends Controller
 {
@@ -72,8 +73,8 @@ class EmployeeController extends Controller
             'date_hired' => 'required|date',
         ]);
     
-        $year = date('Y', strtotime($request->date_hired));
-        $count = Employee::whereYear('date_hired', $year)->count() + 1;
+        $year = date('y', strtotime($request->date_hired)); // last 2 digits
+        $count = Employee::whereYear('date_hired', '20' . $year)->count() + 1;
         $employeeId = $year . str_pad($count, 3, '0', STR_PAD_LEFT);
     
         $employee = Employee::create([
@@ -174,7 +175,7 @@ class EmployeeController extends Controller
             $middleName = implode(' ', array_slice($nameParts, 1, -1));
 
             // Check if employee exists
-            $exists = \App\Models\Employee::where('first_name', $firstName)
+            $exists = Employee::where('first_name', $firstName)
                         ->where('last_name', $lastName)
                         ->where('date_of_birth', $dob)
                         ->exists();
@@ -184,11 +185,12 @@ class EmployeeController extends Controller
             }
 
             // Generate employee ID
-            $year = date('Y', strtotime($hired));
-            $count = \App\Models\Employee::whereYear('date_hired', $year)->count() + 1;
+            $year = date('y', strtotime($hired));
+            $count = Employee::whereYear('date_hired', '20' . $year)->count() + 1;
             $employeeId = $year . str_pad($count, 3, '0', STR_PAD_LEFT);
 
-            $employee = \App\Models\Employee::create([
+
+            $employee = Employee::create([
                 'employee_id'      => $employeeId,
                 'first_name' => $firstName,
                 'middle_name' => $middleName,
@@ -208,7 +210,7 @@ class EmployeeController extends Controller
                 'employment_type'  => 'Regular',
             ]);
 
-            \App\Models\User::create([
+            User::create([
                 'name'      => $employee->first_name . ' ' . $employee->last_name,
                 'username'  => $employeeId,
                 'email'     => $employeeId,
@@ -221,5 +223,30 @@ class EmployeeController extends Controller
         }
 
         return back()->with('success', "$imported employee(s) imported. $skipped skipped.");
+    }
+
+
+    public function uploadPhoto(Request $request, $id)
+    {
+        $request->validate([
+            'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+    
+        $employee = Employee::findOrFail($id);
+    
+        // Delete old photo if exists
+        if ($employee->photo_path && Storage::exists('public/employees/' . $employee->photo_path)) {
+            Storage::delete('public/employees/' . $employee->photo_path);
+        }
+    
+        // Store the new file inside /public/employees/
+        $filename = uniqid('emp_') . '.' . $request->file('photo')->getClientOriginalExtension();
+        $request->file('photo')->storeAs('employees', $filename, 'public');
+    
+        $employee->update([
+            'photo_path' => $filename,
+        ]);
+    
+        return back()->with('success', 'Profile photo updated successfully.');
     }
 }
