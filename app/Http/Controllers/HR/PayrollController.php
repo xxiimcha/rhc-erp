@@ -86,12 +86,13 @@ class PayrollController extends Controller
                 }
     
                 $nameRaw = trim($rowData['Staff']);
-                $nameParts = explode(',', $nameRaw);
-                $lastName = strtoupper(trim($nameParts[0] ?? ''));
-                $firstName = strtoupper(trim(preg_replace('/[^A-Za-z ]/', '', $nameParts[1] ?? '')));
-    
-                $employee = Employee::whereRaw('UPPER(first_name) LIKE ?', ['%' . $firstName . '%'])
-                    ->whereRaw('UPPER(last_name) LIKE ?', ['%' . $lastName . '%'])
+                $nameParts = array_map('trim', explode(',', strtoupper($nameRaw)));
+                $lastName = $nameParts[0] ?? '';
+                $firstName = $nameParts[1] ?? '';
+
+                // Matching against DB using combinations
+                $employee = Employee::whereRaw("CONCAT(UPPER(TRIM(first_name)), ' ', UPPER(TRIM(last_name))) LIKE ?", ["%$firstName $lastName%"])
+                    ->orWhereRaw("CONCAT(UPPER(TRIM(last_name)), ', ', UPPER(TRIM(first_name))) LIKE ?", ["%$lastName, $firstName%"])
                     ->first();
     
                 if (!$employee) {
@@ -101,7 +102,7 @@ class PayrollController extends Controller
                 }
     
                 HistoricalPayroll::create([
-                    'employee_id'    => $employee->id,
+                    'employee_id'    => $employee->id, // FK reference to employee table
                     'employee_name'  => $nameRaw,
                     'department'     => $sheetTitle,
                     'basic_salary'   => getValue($rowData, ['Basic Salary']),
@@ -112,9 +113,10 @@ class PayrollController extends Controller
                     'pagibig'        => getValue($rowData, ['Pagibig', 'Pag-ibig']),
                     'net_pay'        => getValue($rowData, ['Net Pay', 'NetPay']),
                     'sheet'          => $sheetTitle,
-                    'cutoff'         => 'Dec 15',
-                    'period'         => '2024-12-15',
+                    'cutoff'         => $request->input('cutoff'),  // dynamically from form
+                    'period'         => $request->input('month') . '-' . ($request->input('cutoff') === '1-15' ? '15' : '30'),  // builds period like 2024-12-15 or 2024-12-30
                 ]);
+            
     
                 $inserted++;
             }
