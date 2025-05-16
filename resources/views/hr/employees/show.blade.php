@@ -15,28 +15,43 @@
 
         <div class="card shadow-sm">
             <div class="card-body">
-                <ul class="nav nav-tabs mb-4">
-                    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#profile">Profile Info</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#attendance">Attendance</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#leaves">Leaves</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#documents">Documents</button></li>
-                    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salary">Salary</button></li>
+                {{-- Tabs --}}
+                <ul class="nav nav-tabs mb-4" id="employeeTab" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->get('tab') === 'profile' || !request()->has('tab') ? 'active' : '' }}"
+                        data-bs-toggle="tab" href="#profile" role="tab">Profile Info</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->get('tab') === 'attendance' ? 'active' : '' }}"
+                        data-bs-toggle="tab" href="#attendance" role="tab">Attendance</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->get('tab') === 'leaves' ? 'active' : '' }}"
+                        data-bs-toggle="tab" href="#leaves" role="tab">Leaves</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->get('tab') === 'documents' ? 'active' : '' }}"
+                        data-bs-toggle="tab" href="#documents" role="tab">Documents</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->get('tab') === 'salary' ? 'active' : '' }}"
+                        data-bs-toggle="tab" href="#salary" role="tab">Salary</a>
+                    </li>
                 </ul>
-
                 <div class="tab-content">
-                    <div class="tab-pane fade show active" id="profile">
+                    <div class="tab-pane fade {{ request()->get('tab') === 'profile' || !request()->has('tab') ? 'show active' : '' }}" id="profile" role="tabpanel">
                         @include('hr.employees.tabs.profile')
                     </div>
-                    <div class="tab-pane fade" id="attendance">
+                    <div class="tab-pane fade {{ request()->get('tab') === 'attendance' ? 'show active' : '' }}" id="attendance" role="tabpanel">
                         @include('hr.employees.tabs.attendance')
                     </div>
-                    <div class="tab-pane fade" id="leaves">
+                    <div class="tab-pane fade {{ request()->get('tab') === 'leaves' ? 'show active' : '' }}" id="leaves" role="tabpanel">
                         @include('hr.employees.tabs.leaves')
                     </div>
-                    <div class="tab-pane fade" id="documents">
+                    <div class="tab-pane fade {{ request()->get('tab') === 'documents' ? 'show active' : '' }}" id="documents" role="tabpanel">
                         @include('hr.employees.tabs.documents')
                     </div>
-                    <div class="tab-pane fade" id="salary">
+                    <div class="tab-pane fade {{ request()->get('tab') === 'salary' ? 'show active' : '' }}" id="salary" role="tabpanel">
                         @include('hr.employees.tabs.salary')
                     </div>
                 </div>
@@ -111,6 +126,7 @@
     </div>
 </div>
 
+{{-- JS to preserve tab on reload via hash --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('editAttendanceModal');
@@ -126,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!datetime) return '';
             const dt = new Date(datetime);
             const pad = (n) => n.toString().padStart(2, '0');
-            return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+            return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
         };
 
         modal.querySelector('#modal-date').value = new Date(date).toISOString().split('T')[0];
@@ -134,7 +150,22 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.querySelector('#modal-time-in').value = formatForInput(timeIn);
         modal.querySelector('#modal-time-out').value = formatForInput(timeOut);
     });
+
+    // Preserve tab on reload using hash
+    const hash = window.location.hash;
+    if (hash) {
+        const tabTrigger = document.querySelector(`.nav-link[href="${hash}"]`);
+        if (tabTrigger) {
+            new bootstrap.Tab(tabTrigger).show();
+        }
+    }
+
+    // Update hash when tab is clicked
+    document.querySelectorAll('.nav-tabs .nav-link').forEach((tab) => {
+        tab.addEventListener('shown.bs.tab', function (e) {
+            history.replaceState(null, null, e.target.getAttribute('href'));
+        });
+    });
 });
 </script>
-
 @endsection

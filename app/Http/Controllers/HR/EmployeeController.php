@@ -31,18 +31,36 @@ class EmployeeController extends Controller
     {
         $employee = Employee::findOrFail($id);
 
-        $month = request()->input('month', now()->format('Y-m'));
+        // Get selected year and month from query parameters
+        $selectedYear = request()->input('year', now()->format('Y'));
+        $selectedMonth = request()->input('month', now()->format('m'));
+
+        // Safely combine into a valid date string
+        $monthDate = \Carbon\Carbon::createFromFormat('Y-m', $selectedYear . '-' . $selectedMonth);
+
+        // Attendance records for the selected month
         $clockings = Clocking::where('employee_id', $employee->employee_id)
-            ->whereYear('time_in', Carbon::parse($month)->year)
-            ->whereMonth('time_in', Carbon::parse($month)->month)
+            ->whereYear('time_in', $monthDate->year)
+            ->whereMonth('time_in', $monthDate->month)
             ->orderBy('time_in', 'asc')
             ->get()
             ->groupBy(function ($item) {
-                return Carbon::parse($item->time_in)->format('Y-m-d');
+                return \Carbon\Carbon::parse($item->time_in)->format('Y-m-d');
             });
 
-        return view('hr.employees.show', compact('employee', 'clockings', 'month'));
+        // Fetch holidays if applicable (optional)
+        $holidays = []; // Replace with your logic if needed
+
+        return view('hr.employees.show', [
+            'employee' => $employee,
+            'clockings' => $clockings,
+            'month' => $monthDate->format('Y-m'),
+            'holidays' => $holidays,
+            'selectedYear' => $selectedYear,
+            'selectedMonth' => $selectedMonth,
+        ]);
     }
+
 
     public function storeRfid(Request $request, $id)
     {
