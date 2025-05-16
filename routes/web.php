@@ -4,9 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\PayrollSettingController;
+
 use App\Http\Controllers\HR\EmployeeController;
 use App\Http\Controllers\HR\AttendanceController;
 use App\Http\Controllers\HR\PayrollController;
+use App\Http\Controllers\HR\LeaveController;
 use App\Http\Controllers\ClockingController;
 
 // Show login form
@@ -25,7 +27,6 @@ Route::get('/dashboard', function () {
 
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
-    
     // User Management
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
@@ -63,6 +64,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/payslip/{id}', [PayrollController::class, 'payslip'])->name('payslip');
     });
 
+    Route::prefix('hr/leaves')->name('hr.leave.')->group(function () {
+        Route::get('/', [LeaveController::class, 'index'])->name('index');
+        Route::post('/', [LeaveController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [LeaveController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [LeaveController::class, 'update'])->name('update');
+        Route::delete('/{id}', [LeaveController::class, 'destroy'])->name('destroy');
+    });
+    
     //Settings
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/payroll', [PayrollSettingController::class, 'edit'])->name('payroll');
