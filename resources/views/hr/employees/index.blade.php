@@ -11,6 +11,9 @@
                 <h4 class="page-title">Employee Records</h4>
             </div>
             <div class="col-sm-6 text-sm-end">
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#importEmployeeModal">
+                    <i class="fas fa-file-upload"></i> Import Excel
+                </button>
                 <a href="{{ route('admin.hr.employees.create') }}" class="btn btn-success btn-sm">
                     <i class="fas fa-user-plus"></i> Add Employee
                 </a>
@@ -86,6 +89,31 @@
                         </div>
                     </div>
                 @endforeach
+                <!-- Import Employees Modal -->
+                <div class="modal fade" id="importEmployeeModal" tabindex="-1" aria-labelledby="importEmployeeModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <form action="{{ route('admin.hr.employees.import') }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="modal-content">
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title" id="importEmployeeModalLabel">Import Employees via Excel</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <label for="employee_excel" class="form-label">Upload Excel File</label>
+                                    <input type="file" name="employee_excel" class="form-control" accept=".xlsx,.xls" required>
+                                    <div class="mt-2 small text-muted">Accepted formats: .xlsx, .xls</div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-upload"></i> Import
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
             </div>
         </div>
 

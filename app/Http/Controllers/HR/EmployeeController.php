@@ -9,6 +9,9 @@ use App\Models\EmployeeSalary;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\User;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
+use Illuminate\Support\Str;
 
 class EmployeeController extends Controller
 {
@@ -130,5 +133,93 @@ class EmployeeController extends Controller
 
         return back()->with('success', 'Salary record added.');
     }
+    
+    public function import(Request $request)
+    {
+        $request->validate([
+            'employee_excel' => 'required|mimes:xlsx,xls',
+        ]);
 
+        $file = $request->file('employee_excel');
+        $spreadsheet = IOFactory::load($file);
+        $rows = $spreadsheet->getActiveSheet()->toArray();
+
+        $skipped = 0;
+        $imported = 0;
+
+        foreach (array_slice($rows, 1) as $row) {
+            // Map columns
+            $fullName   = trim($row[0]);
+            $position   = $row[1];
+            $department = $row[2];
+            $sss        = $row[3];
+            $tin        = $row[4];
+            $pagibig    = $row[5];
+            $address    = $row[6];
+
+            // Handle DOB
+            $dob = is_numeric($row[7])
+                ? Date::excelToDateTimeObject($row[7])->format('Y-m-d')
+                : date('Y-m-d', strtotime($row[7]));
+
+            // Handle Date Hired
+            $hired = is_numeric($row[8])
+                ? Date::excelToDateTimeObject($row[8])->format('Y-m-d')
+                : date('Y-m-d', strtotime($row[8]));
+
+            // Split name
+            $nameParts = explode(' ', $fullName);
+            $firstName = $nameParts[0] ?? '';
+            $lastName = array_pop($nameParts);
+            $middleName = implode(' ', array_slice($nameParts, 1, -1));
+
+            // Check if employee exists
+            $exists = \App\Models\Employee::where('first_name', $firstName)
+                        ->where('last_name', $lastName)
+                        ->where('date_of_birth', $dob)
+                        ->exists();
+            if ($exists) {
+                $skipped++;
+                continue;
+            }
+
+            // Generate employee ID
+            $year = date('Y', strtotime($hired));
+            $count = \App\Models\Employee::whereYear('date_hired', $year)->count() + 1;
+            $employeeId = $year . str_pad($count, 3, '0', STR_PAD_LEFT);
+
+            $employee = \App\Models\Employee::create([
+                'employee_id'      => $employeeId,
+                'first_name' => $firstName,
+                'middle_name' => $middleName,
+                'last_name' => $lastName,
+                'address'          => $address,
+                'position'         => $position,
+                'department'       => $department,
+                'date_of_birth'    => $dob,
+                'date_hired'       => $hired,
+                'sss_no'           => $sss,
+                'pagibig_no'       => $pagibig,
+                'tin_no'           => $tin,
+                'philhealth_no'    => null,
+                'email'            => strtolower(Str::slug($employeeId)) . '@rhc-erp.local',
+                'contact_number'   => '',
+                'gender'           => '',
+                'employment_type'  => 'Regular',
+            ]);
+
+            \App\Models\User::create([
+                'name'      => $employee->first_name . ' ' . $employee->last_name,
+                'username'  => $employeeId,
+                'email'     => $employeeId,
+                'password'  => bcrypt($employeeId),
+                'role'      => 'employee',
+                'is_active' => 1,
+            ]);
+
+            $imported++;
+        }
+
+        return back()->with('success', "$imported employee(s) imported. $skipped skipped.");
+    }
 }

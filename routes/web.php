@@ -45,6 +45,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/create', [EmployeeController::class, 'create'])->name('create');
         Route::post('/', [EmployeeController::class, 'store'])->name('store');
         Route::get('/{id}', [EmployeeController::class, 'show'])->name('show');
+        Route::post('/import', [EmployeeController::class, 'import'])->name('import');
+
+        //rfid & salary declaration
         Route::post('/{id}/rfid', [EmployeeController::class, 'storeRfid'])->name('rfid.store');
         Route::post('{id}/salary', [EmployeeController::class, 'storeSalary'])->name('salary.store');
     });
