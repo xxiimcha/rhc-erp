@@ -16,6 +16,19 @@
                 </a>
             </div>
         </div>
+        <form action="{{ route('admin.hr.payroll.import') }}" method="POST" enctype="multipart/form-data" class="mb-4">
+            @csrf
+            <div class="row">
+                <div class="col-md-4">
+                    <input type="file" name="payroll_file" class="form-control" required>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-success" type="submit">
+                        <i class="fas fa-upload"></i> Import Excel
+                    </button>
+                </div>
+            </div>
+        </form>
 
         @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">

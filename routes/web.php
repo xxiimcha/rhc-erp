@@ -66,6 +66,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/view', [PayrollController::class, 'view'])->name('view'); // shows per-employee payroll
         Route::get('/compute/{id}', [PayrollController::class, 'compute'])->name('compute');
         Route::get('/payslip/{id}', [PayrollController::class, 'payslip'])->name('payslip');
+        Route::post('/import', [PayrollController::class, 'import'])->name('import');
     });
 
     Route::prefix('hr/leaves')->name('hr.leave.')->group(function () {
