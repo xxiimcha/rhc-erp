@@ -162,55 +162,57 @@ class PayrollController extends Controller
     }
 
     public function compute($id, Request $request)
-    {
-        $cutoff = $request->get('cutoff');
-        $monthString = $request->get('month');
-        $employee = Employee::with('activeSalary')->findOrFail($id);
+{
+    $cutoff = $request->get('cutoff');
+    $month = $request->get('month'); // ✅ this line was missing
 
-        $monthBase = Carbon::createFromFormat('Y-m', $monthString);
+    $employee = Employee::with('activeSalary')->findOrFail($id);
+    $monthBase = Carbon::createFromFormat('Y-m', $month);
 
-        if ($cutoff === '16-30') {
-            $start = $monthBase->copy()->day(16)->startOfDay();
-            $end = $monthBase->copy()->endOfMonth()->endOfDay();
-        } else {
-            $start = $monthBase->copy()->day(1)->startOfDay();
-            $end = $monthBase->copy()->day(15)->endOfDay();
-        }
-
-        $workingDays = collect();
-        $date = $start->copy();
-        while ($date->lte($end)) {
-            if (!in_array($date->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY])) {
-                $workingDays->push($date->copy());
-            }
-            $date->addDay();
-        }
-
-        $attendanceDays = Clocking::where('employee_id', $id)
-            ->whereBetween('time_in', [$start, $end])
-            ->selectRaw('DATE(time_in) as date')
-            ->distinct()
-            ->pluck('date')
-            ->map(fn($d) => Carbon::parse($d));
-
-        $attendanceDates = $attendanceDays->map(fn($d) => $d->format('Y-m-d'));
-
-        $daysAbsent = $workingDays->filter(function ($day) use ($attendanceDates) {
-            return !$attendanceDates->contains($day->format('Y-m-d'));
-        });
-
-        $totalLateMinutes = Clocking::where('employee_id', $id)
-            ->whereBetween('time_in', [$start, $end])
-            ->sum('late_minutes');
-
-        return view('hr.payroll.compute', compact(
-            'employee',
-            'cutoff',
-            'month',
-            'daysAbsent',
-            'totalLateMinutes'
-        ));
+    if ($cutoff === '16-30') {
+        $start = $monthBase->copy()->day(16)->startOfDay();
+        $end = $monthBase->copy()->endOfMonth()->endOfDay();
+    } else {
+        $start = $monthBase->copy()->day(1)->startOfDay();
+        $end = $monthBase->copy()->day(15)->endOfDay();
     }
+
+    $workingDays = collect();
+    $date = $start->copy();
+    while ($date->lte($end)) {
+        if (!in_array($date->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY])) {
+            $workingDays->push($date->copy());
+        }
+        $date->addDay();
+    }
+
+    $attendanceDays = Clocking::where('employee_id', $id)
+        ->whereBetween('time_in', [$start, $end])
+        ->selectRaw('DATE(time_in) as date')
+        ->distinct()
+        ->pluck('date')
+        ->map(fn($d) => Carbon::parse($d));
+
+    $attendanceDates = $attendanceDays->map(fn($d) => $d->format('Y-m-d'));
+
+    $daysAbsent = $workingDays->filter(function ($day) use ($attendanceDates) {
+        return !$attendanceDates->contains($day->format('Y-m-d'));
+    });
+
+    $totalLateMinutes = Clocking::where('employee_id', $id)
+        ->whereBetween('time_in', [$start, $end])
+        ->sum('late_minutes');
+
+    $attendanceLogs = Clocking::where('employee_id', $id)
+        ->whereBetween('time_in', [$start, $end])
+        ->orderBy('time_in')
+        ->get();
+
+    return view('hr.payroll.compute', compact(
+        'employee', 'cutoff', 'month', 'daysAbsent', 'totalLateMinutes', 'attendanceLogs'
+    ));
+}
+
 
     public function payslip($id, Request $request)
     {
