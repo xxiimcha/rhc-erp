@@ -20,75 +20,62 @@ class PayrollController extends Controller
         $month = $request->get('month', now()->format('Y-m'));
         return view('hr.payroll.cutoffs', compact('month'));
     }
-
     public function import(Request $request)
     {
         $request->validate([
             'payroll_file' => 'required|mimes:xlsx,xls',
         ]);
-
+    
         $file = $request->file('payroll_file');
         $spreadsheet = IOFactory::load($file->getRealPath());
         $unmatched = [];
         $matchedEntries = [];
         $inserted = 0;
-
+    
         $netPayAliases = ['Net Pay', 'NetPay', 'Netpay', 'Net Pay ', ' Net Pay'];
         $normalizedNetPayAliases = array_map([$this, 'normalizeKey'], $netPayAliases);
-
+    
         foreach ($spreadsheet->getWorksheetIterator() as $sheet) {
             $sheetTitle = $sheet->getTitle();
             $highestRow = $sheet->getHighestRow();
-
             $headers = [];
             $rawHeaderNames = [];
             $col = 1;
             $foundNetPay = false;
-
-            // Read headers only until "Net Pay" is reached
+    
             while (true) {
                 $columnLetter = Coordinate::stringFromColumnIndex($col);
                 $value = (string) $sheet->getCell($columnLetter . '7')->getValue();
                 $normalized = $this->normalizeKey($value);
-
+    
                 if (trim($value) !== '') {
                     $headers[$normalized] = $col;
                     $rawHeaderNames[] = $value;
-
+    
                     if (in_array($normalized, $normalizedNetPayAliases)) {
                         $foundNetPay = true;
                         break;
                     }
                 }
-
+    
                 $col++;
-                if ($col > 100) break; // safety stop
+                if ($col > 100) break;
             }
-
+    
             Log::info("Sheet '$sheetTitle' headers: " . json_encode($rawHeaderNames));
-            if ($foundNetPay) {
-                Log::info("Sheet '$sheetTitle' matched Net Pay header.");
-            } else {
-                Log::warning("Sheet '$sheetTitle' has NO recognizable Net Pay header.");
-            }
-            Log::debug("Normalized header keys for '$sheetTitle': " . implode(', ', array_keys($headers)));
-
-            $processedRows = 0;
-            $rowNumbers = [];
-
+    
             for ($row = 8; $row <= $highestRow; $row++) {
                 $rowData = [];
-
+    
                 foreach ($headers as $normalizedKey => $colIndex) {
                     $colLetter = Coordinate::stringFromColumnIndex($colIndex);
                     $cell = $sheet->getCell($colLetter . $row);
                     $cellValue = $cell->isFormula()
                         ? $cell->getOldCalculatedValue()
                         : $cell->getCalculatedValue();
-                    $cellValue = trim((string) $cellValue);
-                    $rowData[$normalizedKey] = $cellValue;
+                    $rowData[$normalizedKey] = trim((string) $cellValue);
                 }
-
+    
                 $staffCell = strtolower(trim($rowData['staff'] ?? ''));
                 if (
                     $staffCell === '' ||
@@ -99,21 +86,21 @@ class PayrollController extends Controller
                 ) {
                     continue;
                 }
-
+    
                 $nameRaw = trim($rowData['staff']);
                 $nameParts = array_map('trim', explode(',', strtoupper($nameRaw)));
                 $lastName = $nameParts[0] ?? '';
                 $firstName = $nameParts[1] ?? '';
-
+    
                 $employee = Employee::whereRaw("CONCAT(UPPER(TRIM(first_name)), ' ', UPPER(TRIM(last_name))) LIKE ?", ["%$firstName $lastName%"])
                     ->orWhereRaw("CONCAT(UPPER(TRIM(last_name)), ', ', UPPER(TRIM(first_name))) LIKE ?", ["%$lastName, $firstName%"])
                     ->first();
-
+    
                 if (!$employee) {
                     $unmatched[] = $nameRaw;
                     continue;
                 }
-
+    
                 $getVal = function ($aliases) use ($rowData) {
                     foreach ($aliases as $alias) {
                         $key = $this->normalizeKey($alias);
@@ -123,54 +110,52 @@ class PayrollController extends Controller
                     }
                     return 0.00;
                 };
-
-                $basic = $getVal(['Basic Salary', 'Basic']);
-                $allow = $getVal(['Allowance']);
-                $gross = $getVal(['Gross', 'Gross Pay', 'Total Gross']);
-                $net = $getVal($netPayAliases);
-                $sss = $getVal(['SSS']);
-                $philhealth = $getVal(['PhilHealth', 'Philhealth', 'Phil Health']);
-                $pagibig = $getVal(['Pagibig', 'Pag-ibig']);
-
+    
                 HistoricalPayroll::create([
-                    'employee_id'    => $employee->id,
-                    'employee_name'  => $nameRaw,
-                    'department'     => $sheetTitle,
-                    'basic_salary'   => $basic,
-                    'allowance'      => $allow,
-                    'gross'          => $gross,
-                    'sss'            => $sss,
-                    'philhealth'     => $philhealth,
-                    'pagibig'        => $pagibig,
-                    'net_pay'        => $net,
-                    'sheet'          => $sheetTitle,
-                    'cutoff'         => $request->input('cutoff'),
-                    'period'         => $request->input('month') . '-' . ($request->input('cutoff') === '1-15' ? '15' : '30'),
+                    'employee_id'       => $employee->id,
+                    'employee_name'     => $nameRaw,
+                    'department'        => $sheetTitle,
+                    'basic_salary'      => $getVal(['Basic Salary', 'Basic']),
+                    'allowance'         => $getVal(['Allowance']),
+                    'adjustment'        => $getVal(['ADJ', 'Adjustment']),
+                    'ot'                => $getVal(['OT']),
+                    'rdot'              => $getVal(['RDOT']),
+                    'sh_ot'             => $getVal(['SH OT']),
+                    'sh'                => $getVal(['SH']),
+                    'lh_rh'             => $getVal(['LH/RH']),
+                    'rnd'               => $getVal(['RND']),
+                    'tardiness'         => $getVal(['Tardiness']),
+                    'absences'          => $getVal(['Absences']),
+                    'gross'             => $getVal(['Gross', 'Gross Pay']),
+                    'sss'               => $getVal(['SSS']),
+                    'philhealth'        => $getVal(['PhilHealth', 'Philhealth']),
+                    'pagibig'           => $getVal(['Pagibig', 'Pag-ibig']),
+                    'others'            => $getVal(['Others']),
+                    'total_deduction'   => $getVal(['Total Deduction', 'Total Ded']),
+                    'net_pay'           => $getVal($netPayAliases),
+                    'sheet'             => $sheetTitle,
+                    'cutoff'            => $request->input('cutoff'),
+                    'period'            => $request->input('month') . '-' . ($request->input('cutoff') === '1-15' ? '15' : '30'),
                 ]);
-
+    
                 $matchedEntries[] = [
                     'employee_name' => $nameRaw,
-                    'basic_salary' => $basic,
-                    'allowance' => $allow,
-                    'gross' => $gross,
-                    'net_pay' => $net,
-                    'department' => $sheetTitle
+                    'department'    => $sheetTitle,
+                    'gross'         => $getVal(['Gross', 'Gross Pay']),
+                    'net_pay'       => $getVal($netPayAliases),
                 ];
-
-                $processedRows++;
-                $rowNumbers[] = $row;
+    
                 $inserted++;
             }
-
-            Log::info("Sheet '$sheetTitle' processed with $processedRows data rows. Rows: [" . implode(', ', $rowNumbers) . "]");
         }
-
+    
         return redirect()->back()->with([
             'success' => "Historical payroll imported successfully. Inserted: $inserted",
             'matched' => $matchedEntries,
             'unmatched' => $unmatched,
         ]);
     }
+    
 
     public function view(Request $request)
     {
@@ -264,7 +249,6 @@ class PayrollController extends Controller
         return view('hr.payroll.payslip', compact('employee', 'payroll', 'cutoff', 'month'));
     }
 
-    // ✅ Normalize function moved to global scope in class
     private function normalizeKey($string) {
         return strtolower(trim(preg_replace('/[\s\x{00A0}\x{2000}-\x{200B}\x{3000}]/u', ' ', $string)));
     }

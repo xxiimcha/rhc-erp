@@ -26,7 +26,11 @@
 
         @php
             $grouped = $employees->groupBy('department');
-            $cutoffDate = \Carbon\Carbon::parse($month . '-01'); // reference date for filtering
+            $cutoffDate = \Carbon\Carbon::parse($month . '-01');
+
+            function fmt($val) {
+                return ($val ?? 0) == 0 ? '--' : number_format($val, 2);
+            }
         @endphp
 
         @foreach ($grouped as $department => $groupedEmployees)
@@ -36,7 +40,7 @@
             </div>
             <div class="card-body table-responsive">
                 <table class="table table-bordered table-striped mb-0">
-                    <thead>
+                    <thead class="table-light">
                         <tr>
                             <th>Employee ID</th>
                             <th>Full Name</th>
@@ -56,26 +60,30 @@
                         @forelse ($validEmployees as $employee)
                         @php
                             $payroll = $historicalPayrolls[$employee->id] ?? null;
+                            $totalDeduction = 
+                                ($payroll->sss ?? 0) + 
+                                ($payroll->philhealth ?? 0) + 
+                                ($payroll->pagibig ?? 0) + 
+                                ($payroll->others ?? 0);
                         @endphp
                         <tr>
                             <td>{{ $employee->employee_id }}</td>
                             <td>{{ $employee->first_name }} {{ $employee->last_name }}</td>
-                            <td>{{ number_format($payroll->gross ?? 0, 2) }}</td>
-                            <td>{{ number_format(($payroll->sss ?? 0) + ($payroll->philhealth ?? 0) + ($payroll->pagibig ?? 0), 2) }}</td>
-                            <td>{{ number_format($payroll->net_pay ?? 0, 2) }}</td>
+                            <td>{{ fmt($payroll->gross ?? 0) }}</td>
+                            <td>{{ $totalDeduction == 0 ? '--' : number_format($totalDeduction, 2) }}</td>
+                            <td>{{ fmt($payroll->net_pay ?? 0) }}</td>
                             <td class="text-end">
                                 @if (!$payroll)
                                 <a href="{{ url('admin/hr/payroll/compute/' . $employee->id) }}?cutoff={{ $cutoff }}&month={{ $month }}"
-                                    class="btn btn-sm btn-warning me-1">
+                                   class="btn btn-sm btn-warning me-1">
                                     <i class="fas fa-calculator"></i> Compute
                                 </a>
                                 @endif
                                 <a href="{{ url('admin/hr/payroll/payslip/' . $employee->id) }}?cutoff={{ $cutoff }}&month={{ $month }}"
-                                class="btn btn-sm btn-info">
-                                    <i class="fas fa-receipt"></i> Generate Payslip
+                                   class="btn btn-sm btn-info">
+                                    <i class="fas fa-receipt"></i> Payslip
                                 </a>
                             </td>
-
                         </tr>
                         @empty
                         <tr>

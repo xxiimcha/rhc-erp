@@ -17,6 +17,20 @@
             </div>
         </div>
 
+        @php
+            function formatAmount($val) {
+                return ($val ?? 0) == 0 ? '--' : number_format($val, 2);
+            }
+
+            $totalDeductions = 
+                ($payroll->sss ?? 0) +
+                ($payroll->philhealth ?? 0) +
+                ($payroll->pagibig ?? 0) +
+                ($payroll->tardiness ?? 0) +
+                ($payroll->absences ?? 0) +
+                ($payroll->others ?? 0);
+        @endphp
+
         <div class="card shadow">
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-4">
@@ -38,17 +52,18 @@
                     <div class="col-md-6">
                         <h6 class="text-success">Earnings</h6>
                         <table class="table table-bordered mb-4">
-                            <tr>
-                                <th>Basic Salary</th>
-                                <td>{{ number_format($payroll->basic_salary ?? 0, 2) }}</td>
-                            </tr>
-                            <tr>
-                                <th>Allowance</th>
-                                <td>{{ number_format($payroll->allowance ?? 0, 2) }}</td>
-                            </tr>
+                            <tr><th>Basic Salary</th><td>{{ formatAmount($payroll->basic_salary) }}</td></tr>
+                            <tr><th>Allowance</th><td>{{ formatAmount($payroll->allowance) }}</td></tr>
+                            <tr><th>Adjustment</th><td>{{ formatAmount($payroll->adjustment) }}</td></tr>
+                            <tr><th>OT</th><td>{{ formatAmount($payroll->ot) }}</td></tr>
+                            <tr><th>RDOT</th><td>{{ formatAmount($payroll->rdot) }}</td></tr>
+                            <tr><th>SH OT</th><td>{{ formatAmount($payroll->sh_ot) }}</td></tr>
+                            <tr><th>SH</th><td>{{ formatAmount($payroll->sh) }}</td></tr>
+                            <tr><th>LH/RH</th><td>{{ formatAmount($payroll->lh_rh) }}</td></tr>
+                            <tr><th>RND</th><td>{{ formatAmount($payroll->rnd) }}</td></tr>
                             <tr class="table-primary">
-                                <th>Total Gross Pay</th>
-                                <td><strong>{{ number_format($payroll->gross ?? 0, 2) }}</strong></td>
+                                <th>Gross Pay</th>
+                                <td><strong>{{ formatAmount($payroll->gross) }}</strong></td>
                             </tr>
                         </table>
                     </div>
@@ -57,21 +72,15 @@
                     <div class="col-md-6">
                         <h6 class="text-danger">Deductions</h6>
                         <table class="table table-bordered mb-4">
-                            <tr>
-                                <th>SSS</th>
-                                <td>{{ number_format($payroll->sss ?? 0, 2) }}</td>
-                            </tr>
-                            <tr>
-                                <th>PhilHealth</th>
-                                <td>{{ number_format($payroll->philhealth ?? 0, 2) }}</td>
-                            </tr>
-                            <tr>
-                                <th>Pag-IBIG</th>
-                                <td>{{ number_format($payroll->pagibig ?? 0, 2) }}</td>
-                            </tr>
+                            <tr><th>SSS</th><td>{{ formatAmount($payroll->sss) }}</td></tr>
+                            <tr><th>PhilHealth</th><td>{{ formatAmount($payroll->philhealth) }}</td></tr>
+                            <tr><th>Pag-IBIG</th><td>{{ formatAmount($payroll->pagibig) }}</td></tr>
+                            <tr><th>Tardiness</th><td>{{ formatAmount($payroll->tardiness) }}</td></tr>
+                            <tr><th>Absences</th><td>{{ formatAmount($payroll->absences) }}</td></tr>
+                            <tr><th>Other Deductions</th><td>{{ formatAmount($payroll->others) }}</td></tr>
                             <tr class="table-danger">
                                 <th>Total Deductions</th>
-                                <td><strong>{{ number_format(($payroll->sss ?? 0) + ($payroll->philhealth ?? 0) + ($payroll->pagibig ?? 0), 2) }}</strong></td>
+                                <td><strong>{{ $totalDeductions == 0 ? '--' : number_format($totalDeductions, 2) }}</strong></td>
                             </tr>
                         </table>
                     </div>
@@ -80,7 +89,7 @@
                 {{-- Net Pay --}}
                 <div class="text-end">
                     <h4 class="text-dark">Net Pay: 
-                        <span class="text-success">{{ number_format($payroll->net_pay ?? 0, 2) }}</span>
+                        <span class="text-success">{{ formatAmount($payroll->net_pay) }}</span>
                     </h4>
                 </div>
             </div>
