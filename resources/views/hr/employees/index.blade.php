@@ -40,7 +40,7 @@
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <img src="{{ $employee->photo_path 
-                                    ? asset('storage/employees/' . $employee->photo_path) 
+                                    ? asset('employees/' . $employee->photo_path) 
                                     : asset('assets/images/avatar-placeholder.jpg') }}"
                                     alt="Profile"
                                     class="rounded-circle"

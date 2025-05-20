@@ -9,10 +9,10 @@
                 <div class="position-relative d-inline-block mb-3">
                 <img id="preview-photo"
                     data-original="{{ $employee->photo_path 
-                        ? asset('storage/employees/' . $employee->photo_path) 
+                        ? asset('employees/' . $employee->photo_path) 
                         : asset('assets/images/avatar-placeholder.jpg') }}"
                     src="{{ $employee->photo_path 
-                        ? asset('storage/employees/' . $employee->photo_path) 
+                        ? asset('employees/' . $employee->photo_path) 
                         : asset('assets/images/avatar-placeholder.jpg') }}"
                     alt="Profile Photo"
                     class="rounded-circle border border-2"
@@ -115,10 +115,10 @@
                 <div class="text-center mb-3">
                     <img id="modal-preview-photo"
                         data-original="{{ $employee->photo_path 
-                            ? asset('storage/employees/' . $employee->photo_path) 
+                            ? asset('employees/' . $employee->photo_path) 
                             : asset('assets/images/avatar-placeholder.jpg') }}"
                         src="{{ $employee->photo_path 
-                            ? asset('storage/employees/' . $employee->photo_path) 
+                            ? asset('employees/' . $employee->photo_path) 
                             : asset('assets/images/avatar-placeholder.jpg') }}"
                         class="rounded-circle border"
                         style="width: 120px; height: 120px; object-fit: cover;"

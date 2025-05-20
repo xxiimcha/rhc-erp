@@ -94,7 +94,7 @@
                                 <label for="time_out" class="form-label">Time Out</label>
                                 <input type="datetime-local" name="time_out" class="form-control">
                             </div>
-                            <input type="text" name="date" id="manual-date">
+                            <input type="hidden" name="date" id="manual-date">
                         </div>
                         <div class="modal-footer">
                             <button type="submit" class="btn btn-primary">Save</button>

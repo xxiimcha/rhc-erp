@@ -7,7 +7,7 @@
     <div class="container-fluid">
 
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4>Employee Details: {{ $employee->employee_id }}</h4>
+            <h4>{{ $employee->first_name . ' ' . $employee->last_name }}</h4>
             <a href="{{ route('admin.hr.employees.index') }}" class="btn btn-secondary btn-sm">
                 <i class="fas fa-arrow-left"></i> Back to Records
             </a>
