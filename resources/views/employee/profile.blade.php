@@ -23,8 +23,9 @@
             <div class="card-body">
                 <div class="row align-items-start">
                     <div class="col-md-4 text-center border-end">
-                        <img src="{{ 'employees/' . $employee->photo_path ?? asset('assets/images/default-avatar.png') }}"
-                             class="img-fluid rounded-circle mb-3" style="max-width: 150px;" alt="Profile Image">
+                    <img src="{{ $employee->photo_path ? asset('employees/' . $employee->photo_path) : asset('assets/images/default-avatar.png') }}"
+     class="img-fluid rounded-circle mb-3" style="max-width: 150px;" alt="Profile Image">
+
 
                         <h5 class="fw-bold">{{ $employee->first_name }} {{ $employee->last_name }}</h5>
                         <p class="text-muted mb-1">{{ $employee->position }}</p>

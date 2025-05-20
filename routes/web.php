@@ -95,6 +95,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::prefix('employee')->name('employee.')->group(function () {
     // Profile
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+    Route::get('/clocking', [App\Http\Controllers\Employee\ClockingController::class, 'index'])->name('clocking');
+    Route::post('/clocking', [App\Http\Controllers\Employee\ClockingController::class, 'store'])->name('clocking.store');
 
 });
 
