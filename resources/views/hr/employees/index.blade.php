@@ -60,7 +60,9 @@
                             <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#rfidModal{{ $employee->id }}">
                                 <i class="fas fa-id-card"></i>
                             </a>
-                            <a href="#" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
+                            <a href="{{ route('admin.hr.employees.edit', $employee->id) }}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </a>
                             <form action="#" method="POST" style="display:inline-block;">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">

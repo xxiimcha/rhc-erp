@@ -152,7 +152,6 @@ class EmployeeController extends Controller
 
         return back()->with('success', 'Salary record added.');
     }
-    
     public function import(Request $request)
     {
         $request->validate([
@@ -166,8 +165,33 @@ class EmployeeController extends Controller
         $skipped = 0;
         $imported = 0;
 
+        // Name parser helper
+        function parseFullName($fullName) {
+            $fullName = trim(preg_replace('/\s+/', ' ', strtoupper($fullName)));
+            $nameParts = explode(' ', $fullName);
+            $lastName = array_pop($nameParts);
+
+            $middleName = '';
+            $firstName = '';
+
+            foreach (array_reverse($nameParts) as $i => $part) {
+                if (preg_match('/^[A-Z]\.$/', $part)) {
+                    $middleName = $part;
+                    unset($nameParts[count($nameParts) - 1 - $i]);
+                    break;
+                }
+            }
+
+            $firstName = implode(' ', $nameParts);
+
+            return [
+                'first_name' => trim($firstName),
+                'middle_name' => trim($middleName),
+                'last_name' => trim($lastName),
+            ];
+        }
+
         foreach (array_slice($rows, 1) as $row) {
-            // Map columns
             $fullName   = trim($row[0]);
             $position   = $row[1];
             $department = $row[2];
@@ -176,43 +200,35 @@ class EmployeeController extends Controller
             $pagibig    = $row[5];
             $address    = $row[6];
 
-            // Handle DOB
             $dob = is_numeric($row[7])
                 ? Date::excelToDateTimeObject($row[7])->format('Y-m-d')
                 : date('Y-m-d', strtotime($row[7]));
 
-            // Handle Date Hired
             $hired = is_numeric($row[8])
                 ? Date::excelToDateTimeObject($row[8])->format('Y-m-d')
                 : date('Y-m-d', strtotime($row[8]));
 
-            // Split name
-            $nameParts = explode(' ', $fullName);
-            $firstName = $nameParts[0] ?? '';
-            $lastName = array_pop($nameParts);
-            $middleName = implode(' ', array_slice($nameParts, 1, -1));
+            $parsed = parseFullName($fullName);
 
-            // Check if employee exists
-            $exists = Employee::where('first_name', $firstName)
-                        ->where('last_name', $lastName)
+            $exists = Employee::where('first_name', $parsed['first_name'])
+                        ->where('last_name', $parsed['last_name'])
                         ->where('date_of_birth', $dob)
                         ->exists();
+
             if ($exists) {
                 $skipped++;
                 continue;
             }
 
-            // Generate employee ID
             $year = date('y', strtotime($hired));
             $count = Employee::whereYear('date_hired', '20' . $year)->count() + 1;
             $employeeId = $year . str_pad($count, 3, '0', STR_PAD_LEFT);
 
-
             $employee = Employee::create([
                 'employee_id'      => $employeeId,
-                'first_name' => $firstName,
-                'middle_name' => $middleName,
-                'last_name' => $lastName,
+                'first_name'       => $parsed['first_name'],
+                'middle_name'      => $parsed['middle_name'],
+                'last_name'        => $parsed['last_name'],
                 'address'          => $address,
                 'position'         => $position,
                 'department'       => $department,
@@ -229,7 +245,7 @@ class EmployeeController extends Controller
             ]);
 
             User::create([
-                'name'      => $employee->first_name . ' ' . $employee->last_name,
+                'name'      => $parsed['first_name'] . ' ' . $parsed['last_name'],
                 'username'  => $employeeId,
                 'email'     => $employeeId,
                 'password'  => bcrypt($employeeId),
@@ -242,7 +258,6 @@ class EmployeeController extends Controller
 
         return back()->with('success', "$imported employee(s) imported. $skipped skipped.");
     }
-
 
     public function uploadPhoto(Request $request, $id)
     {
@@ -266,5 +281,31 @@ class EmployeeController extends Controller
         ]);
     
         return back()->with('success', 'Profile photo updated successfully.');
+    }
+
+
+    public function edit($id)
+    {
+        $employee = Employee::findOrFail($id);
+        return view('hr.employees.edit', compact('employee'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $employee = Employee::findOrFail($id);
+
+        $request->validate([
+            'first_name' => 'required',
+            'last_name' => 'required',
+            'position' => 'required',
+            'department' => 'required',
+            'address' => 'required',
+        ]);
+
+        $employee->update($request->only([
+            'first_name', 'middle_name', 'last_name', 'suffix', 'position', 'department', 'address'
+        ]));
+
+        return redirect()->route('admin.hr.employees.index')->with('success', 'Employee updated successfully.');
     }
 }
