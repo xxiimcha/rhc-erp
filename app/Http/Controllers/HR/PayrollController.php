@@ -8,7 +8,6 @@ use App\Models\Employee;
 use App\Models\Clocking;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Models\HistoricalPayroll;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +18,6 @@ class PayrollController extends Controller
     public function index(Request $request)
     {
         $month = $request->get('month', now()->format('Y-m'));
-
         return view('hr.payroll.cutoffs', compact('month'));
     }
 
@@ -28,53 +26,70 @@ class PayrollController extends Controller
         $request->validate([
             'payroll_file' => 'required|mimes:xlsx,xls',
         ]);
-    
+
         $file = $request->file('payroll_file');
         $spreadsheet = IOFactory::load($file->getRealPath());
         $unmatched = [];
+        $matchedEntries = [];
         $inserted = 0;
-    
-        // Helper to fetch correct value from multiple possible keys
-        function getValue($rowData, $possibleKeys) {
-            foreach ($possibleKeys as $key) {
-                if (isset($rowData[$key]) && trim($rowData[$key]) !== '' && trim($rowData[$key]) !== '-') {
-                    return floatval(str_replace(',', '', $rowData[$key]));
-                }
-            }
-            return 0.00;
-        }
-    
+
+        $netPayAliases = ['Net Pay', 'NetPay', 'Netpay', 'Net Pay ', ' Net Pay'];
+        $normalizedNetPayAliases = array_map([$this, 'normalizeKey'], $netPayAliases);
+
         foreach ($spreadsheet->getWorksheetIterator() as $sheet) {
             $sheetTitle = $sheet->getTitle();
             $highestRow = $sheet->getHighestRow();
-            Log::info("Processing sheet: $sheetTitle");
-    
-            // Read headers from row 7
+
             $headers = [];
+            $rawHeaderNames = [];
             $col = 1;
+            $foundNetPay = false;
+
+            // Read headers only until "Net Pay" is reached
             while (true) {
                 $columnLetter = Coordinate::stringFromColumnIndex($col);
-                $value = trim((string) $sheet->getCell($columnLetter . '7')->getValue());
-                if ($value === '') break;
-                $headers[] = $value;
+                $value = (string) $sheet->getCell($columnLetter . '7')->getValue();
+                $normalized = $this->normalizeKey($value);
+
+                if (trim($value) !== '') {
+                    $headers[$normalized] = $col;
+                    $rawHeaderNames[] = $value;
+
+                    if (in_array($normalized, $normalizedNetPayAliases)) {
+                        $foundNetPay = true;
+                        break;
+                    }
+                }
+
                 $col++;
+                if ($col > 100) break; // safety stop
             }
-    
-            $map = array_flip($headers);
-            Log::info("Headers found:", $headers);
-            Log::info("Mapped indices:", $map);
-    
+
+            Log::info("Sheet '$sheetTitle' headers: " . json_encode($rawHeaderNames));
+            if ($foundNetPay) {
+                Log::info("Sheet '$sheetTitle' matched Net Pay header.");
+            } else {
+                Log::warning("Sheet '$sheetTitle' has NO recognizable Net Pay header.");
+            }
+            Log::debug("Normalized header keys for '$sheetTitle': " . implode(', ', array_keys($headers)));
+
+            $processedRows = 0;
+            $rowNumbers = [];
+
             for ($row = 8; $row <= $highestRow; $row++) {
                 $rowData = [];
-    
-                foreach ($map as $key => $colIndex) {
-                    $colLetter = Coordinate::stringFromColumnIndex($colIndex + 1);
-                    $cellValue = trim((string) $sheet->getCell($colLetter . $row)->getCalculatedValue()); // fix here
-                    $rowData[$key] = $cellValue;
+
+                foreach ($headers as $normalizedKey => $colIndex) {
+                    $colLetter = Coordinate::stringFromColumnIndex($colIndex);
+                    $cell = $sheet->getCell($colLetter . $row);
+                    $cellValue = $cell->isFormula()
+                        ? $cell->getOldCalculatedValue()
+                        : $cell->getCalculatedValue();
+                    $cellValue = trim((string) $cellValue);
+                    $rowData[$normalizedKey] = $cellValue;
                 }
-                
-                // Filter junk footer and headers
-                $staffCell = strtolower(trim($rowData['Staff'] ?? ''));
+
+                $staffCell = strtolower(trim($rowData['staff'] ?? ''));
                 if (
                     $staffCell === '' ||
                     str_contains($staffCell, 'prepared') ||
@@ -84,50 +99,78 @@ class PayrollController extends Controller
                 ) {
                     continue;
                 }
-    
-                $nameRaw = trim($rowData['Staff']);
+
+                $nameRaw = trim($rowData['staff']);
                 $nameParts = array_map('trim', explode(',', strtoupper($nameRaw)));
                 $lastName = $nameParts[0] ?? '';
                 $firstName = $nameParts[1] ?? '';
 
-                // Matching against DB using combinations
                 $employee = Employee::whereRaw("CONCAT(UPPER(TRIM(first_name)), ' ', UPPER(TRIM(last_name))) LIKE ?", ["%$firstName $lastName%"])
                     ->orWhereRaw("CONCAT(UPPER(TRIM(last_name)), ', ', UPPER(TRIM(first_name))) LIKE ?", ["%$lastName, $firstName%"])
                     ->first();
-    
+
                 if (!$employee) {
-                    Log::warning("Unmatched employee name: {$nameRaw} on sheet {$sheetTitle}");
                     $unmatched[] = $nameRaw;
                     continue;
                 }
-    
+
+                $getVal = function ($aliases) use ($rowData) {
+                    foreach ($aliases as $alias) {
+                        $key = $this->normalizeKey($alias);
+                        if (isset($rowData[$key]) && trim($rowData[$key]) !== '' && trim($rowData[$key]) !== '-') {
+                            return floatval(str_replace(',', '', $rowData[$key]));
+                        }
+                    }
+                    return 0.00;
+                };
+
+                $basic = $getVal(['Basic Salary', 'Basic']);
+                $allow = $getVal(['Allowance']);
+                $gross = $getVal(['Gross', 'Gross Pay', 'Total Gross']);
+                $net = $getVal($netPayAliases);
+                $sss = $getVal(['SSS']);
+                $philhealth = $getVal(['PhilHealth', 'Philhealth', 'Phil Health']);
+                $pagibig = $getVal(['Pagibig', 'Pag-ibig']);
+
                 HistoricalPayroll::create([
-                    'employee_id'    => $employee->id, // FK reference to employee table
+                    'employee_id'    => $employee->id,
                     'employee_name'  => $nameRaw,
                     'department'     => $sheetTitle,
-                    'basic_salary'   => getValue($rowData, ['Basic Salary']),
-                    'allowance'      => getValue($rowData, ['Allowance']),
-                    'gross'          => getValue($rowData, ['Gross']),
-                    'sss'            => getValue($rowData, ['SSS']),
-                    'philhealth'     => getValue($rowData, ['PhilHealth', 'Philhealth', 'Phil Health']),
-                    'pagibig'        => getValue($rowData, ['Pagibig', 'Pag-ibig']),
-                    'net_pay'        => getValue($rowData, ['Net Pay', 'NetPay']),
+                    'basic_salary'   => $basic,
+                    'allowance'      => $allow,
+                    'gross'          => $gross,
+                    'sss'            => $sss,
+                    'philhealth'     => $philhealth,
+                    'pagibig'        => $pagibig,
+                    'net_pay'        => $net,
                     'sheet'          => $sheetTitle,
-                    'cutoff'         => $request->input('cutoff'),  // dynamically from form
-                    'period'         => $request->input('month') . '-' . ($request->input('cutoff') === '1-15' ? '15' : '30'),  // builds period like 2024-12-15 or 2024-12-30
+                    'cutoff'         => $request->input('cutoff'),
+                    'period'         => $request->input('month') . '-' . ($request->input('cutoff') === '1-15' ? '15' : '30'),
                 ]);
-            
-    
+
+                $matchedEntries[] = [
+                    'employee_name' => $nameRaw,
+                    'basic_salary' => $basic,
+                    'allowance' => $allow,
+                    'gross' => $gross,
+                    'net_pay' => $net,
+                    'department' => $sheetTitle
+                ];
+
+                $processedRows++;
+                $rowNumbers[] = $row;
                 $inserted++;
             }
+
+            Log::info("Sheet '$sheetTitle' processed with $processedRows data rows. Rows: [" . implode(', ', $rowNumbers) . "]");
         }
-    
+
         return redirect()->back()->with([
             'success' => "Historical payroll imported successfully. Inserted: $inserted",
+            'matched' => $matchedEntries,
             'unmatched' => $unmatched,
         ]);
     }
-    
 
     public function view(Request $request)
     {
@@ -152,12 +195,7 @@ class PayrollController extends Controller
         $employees = Employee::all();
 
         return view('hr.payroll.index', compact(
-            'employees',
-            'clockings',
-            'cutoff',
-            'month',
-            'start',
-            'end'
+            'employees', 'clockings', 'cutoff', 'month', 'start', 'end'
         ));
     }
 
@@ -168,14 +206,12 @@ class PayrollController extends Controller
         $employee = Employee::with('activeSalary')->findOrFail($id);
 
         $monthBase = Carbon::createFromFormat('Y-m', $monthString);
-
-        if ($cutoff === '16-30') {
-            $start = $monthBase->copy()->day(16)->startOfDay();
-            $end = $monthBase->copy()->endOfMonth()->endOfDay();
-        } else {
-            $start = $monthBase->copy()->day(1)->startOfDay();
-            $end = $monthBase->copy()->day(15)->endOfDay();
-        }
+        $start = $cutoff === '16-30'
+            ? $monthBase->copy()->day(16)->startOfDay()
+            : $monthBase->copy()->day(1)->startOfDay();
+        $end = $cutoff === '16-30'
+            ? $monthBase->copy()->endOfMonth()->endOfDay()
+            : $monthBase->copy()->day(15)->endOfDay();
 
         $workingDays = collect();
         $date = $start->copy();
@@ -186,29 +222,20 @@ class PayrollController extends Controller
             $date->addDay();
         }
 
-        $attendanceDays = Clocking::where('employee_id', $id)
+        $attendanceDates = Clocking::where('employee_id', $id)
             ->whereBetween('time_in', [$start, $end])
             ->selectRaw('DATE(time_in) as date')
             ->distinct()
             ->pluck('date')
-            ->map(fn($d) => Carbon::parse($d));
+            ->map(fn($d) => Carbon::parse($d)->format('Y-m-d'));
 
-        $attendanceDates = $attendanceDays->map(fn($d) => $d->format('Y-m-d'));
-
-        $daysAbsent = $workingDays->filter(function ($day) use ($attendanceDates) {
-            return !$attendanceDates->contains($day->format('Y-m-d'));
-        });
-
+        $daysAbsent = $workingDays->filter(fn($day) => !$attendanceDates->contains($day->format('Y-m-d')));
         $totalLateMinutes = Clocking::where('employee_id', $id)
             ->whereBetween('time_in', [$start, $end])
             ->sum('late_minutes');
 
         return view('hr.payroll.compute', compact(
-            'employee',
-            'cutoff',
-            'month',
-            'daysAbsent',
-            'totalLateMinutes'
+            'employee', 'cutoff', 'month', 'daysAbsent', 'totalLateMinutes'
         ));
     }
 
@@ -219,5 +246,10 @@ class PayrollController extends Controller
         $employee = Employee::findOrFail($id);
 
         return view('hr.payroll.payslip', compact('employee', 'cutoff', 'month'));
+    }
+
+    // ✅ Normalize function moved to global scope in class
+    private function normalizeKey($string) {
+        return strtolower(trim(preg_replace('/[\s\x{00A0}\x{2000}-\x{200B}\x{3000}]/u', ' ', $string)));
     }
 }

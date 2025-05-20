@@ -112,7 +112,7 @@
             @csrf
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="uploadModalLabel">Upload Payroll Excel</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" name="month" id="modalMonth">
@@ -124,24 +124,134 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <div id="uploadSpinner" class="spinner-border text-success d-none me-2" role="status">
+                    <span class="visually-hidden">Uploading...</span>
+                </div>
                 <button type="submit" class="btn btn-success">Import</button>
             </div>
         </form>
     </div>
 </div>
 
-{{-- Modal Handling Script --}}
+{{-- Import Success Modal --}}
+<div class="modal fade" id="importSuccessModal" tabindex="-1" aria-labelledby="importSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="importSuccessModalLabel">Import Summary</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="successSummary">
+                <div class="alert alert-success">{{ session('success') }}</div>
+
+                @if(session('matched') && count(session('matched')))
+                <div class="table-responsive mb-3">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>#</th>
+                                <th>Employee Name</th>
+                                <th>Department</th>
+                                <th>Gross</th>
+                                <th>Net Pay</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(session('matched') as $index => $row)
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td>{{ $row['employee_name'] ?? '-' }}</td>
+                                <td>{{ $row['department'] ?? '-' }}</td>
+                                <td>{{ number_format($row['gross'] ?? 0, 2) }}</td>
+                                <td>{{ number_format($row['net_pay'] ?? 0, 2) }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @endif
+
+
+                @if(session('unmatched') && count(session('unmatched')))
+                <div class="alert alert-warning">
+                    <strong>Unmatched Entries:</strong>
+                    <ul class="mb-0">
+                        @foreach(session('unmatched') as $entry)
+                            <li>{{ $entry }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endif
+            </div>
+
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const uploadModal = document.getElementById('uploadModal');
     uploadModal.addEventListener('show.bs.modal', event => {
         const button = event.relatedTarget;
-        const month = button.getAttribute('data-month');
-        const cutoff = button.getAttribute('data-cutoff');
-
-        document.getElementById('modalMonth').value = month;
-        document.getElementById('modalCutoff').value = cutoff;
+        document.getElementById('modalMonth').value = button.getAttribute('data-month');
+        document.getElementById('modalCutoff').value = button.getAttribute('data-cutoff');
+        document.getElementById('uploadSpinner').classList.add('d-none');
     });
+
+    const form = document.querySelector('#uploadModal form');
+    form.addEventListener('submit', () => {
+        document.getElementById('uploadSpinner').classList.remove('d-none');
+    });
+
+    const successMsg = @json(session('success'));
+    const matched = @json(session('matched', []));
+    const unmatched = @json(session('unmatched', []));
+
+    if (successMsg) {
+        const modal = new bootstrap.Modal(document.getElementById('importSuccessModal'));
+        const summaryDiv = document.getElementById('successSummary');
+        summaryDiv.innerHTML = `<div class="alert alert-success">${successMsg}</div>`;
+
+        if (matched.length) {
+            let table = `
+                <div class="table-responsive mb-3">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>#</th>
+                                <th>Employee Name</th>
+                                <th>Department</th>
+                                <th>Gross</th>
+                                <th>Net Pay</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            matched.forEach((row, index) => {
+                table += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${row.employee_name ?? '-'}</td>
+                        <td>${row.department ?? '-'}</td>
+                        <td>${parseFloat(row.gross || 0).toFixed(2)}</td>
+                        <td>${parseFloat(row.net_pay || 0).toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            table += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            summaryDiv.innerHTML += table;
+        }
+
+        modal.show();
+    }
 });
 </script>
+
 @endsection
