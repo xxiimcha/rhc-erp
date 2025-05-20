@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
+
+use App\Http\Controllers\Employee\ProfileController;
+
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\PayrollSettingController;
 
@@ -85,6 +88,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/payroll', [PayrollSettingController::class, 'edit'])->name('payroll');
         Route::post('/payroll', [PayrollSettingController::class, 'update'])->name('payroll.update');
     });
+});
+
+
+// Employee Panel Routes (No auth middleware for now)
+Route::prefix('employee')->name('employee.')->group(function () {
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+
 });
 
 // Clocking System

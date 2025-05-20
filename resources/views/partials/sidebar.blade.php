@@ -29,6 +29,11 @@
                     @include('partials.sidebar.users')
                     @include('partials.sidebar.settings')
 
+                @elseif($user->role === 'employee')
+
+                    {{-- Show employee-specific sidebar --}}
+                    @include('partials.sidebar.employee')
+
                 @else
 
                     {{-- Show sections based on department --}}
