@@ -16,19 +16,6 @@
                 </a>
             </div>
         </div>
-        <form action="{{ route('admin.hr.payroll.import') }}" method="POST" enctype="multipart/form-data" class="mb-4">
-            @csrf
-            <div class="row">
-                <div class="col-md-4">
-                    <input type="file" name="payroll_file" class="form-control" required>
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-success" type="submit">
-                        <i class="fas fa-upload"></i> Import Excel
-                    </button>
-                </div>
-            </div>
-        </form>
 
         @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -53,9 +40,9 @@
                         <tr>
                             <th>Employee ID</th>
                             <th>Full Name</th>
-                            <th>Total Hours</th>
-                            <th>Overtime (min)</th>
-                            <th>Late (min)</th>
+                            <th>Gross Pay</th>
+                            <th>Total Deduction</th>
+                            <th>Net Pay</th>
                             <th class="text-end">Actions</th>
                         </tr>
                     </thead>
@@ -68,24 +55,27 @@
 
                         @forelse ($validEmployees as $employee)
                         @php
-                            $clock = $clockings[$employee->id] ?? null;
+                            $payroll = $historicalPayrolls[$employee->id] ?? null;
                         @endphp
                         <tr>
                             <td>{{ $employee->employee_id }}</td>
                             <td>{{ $employee->first_name }} {{ $employee->last_name }}</td>
-                            <td>{{ $clock->total_hours ?? 0 }}</td>
-                            <td>{{ $clock->total_overtime ?? 0 }}</td>
-                            <td>{{ $clock->total_late ?? 0 }}</td>
+                            <td>{{ number_format($payroll->gross ?? 0, 2) }}</td>
+                            <td>{{ number_format(($payroll->sss ?? 0) + ($payroll->philhealth ?? 0) + ($payroll->pagibig ?? 0), 2) }}</td>
+                            <td>{{ number_format($payroll->net_pay ?? 0, 2) }}</td>
                             <td class="text-end">
+                                @if (!$payroll)
                                 <a href="{{ url('admin/hr/payroll/compute/' . $employee->id) }}?cutoff={{ $cutoff }}&month={{ $month }}"
                                     class="btn btn-sm btn-warning me-1">
                                     <i class="fas fa-calculator"></i> Compute
                                 </a>
+                                @endif
                                 <a href="{{ url('admin/hr/payroll/payslip/' . $employee->id) }}?cutoff={{ $cutoff }}&month={{ $month }}"
-                                   class="btn btn-sm btn-info">
+                                class="btn btn-sm btn-info">
                                     <i class="fas fa-receipt"></i> Generate Payslip
                                 </a>
                             </td>
+
                         </tr>
                         @empty
                         <tr>

@@ -23,12 +23,34 @@
                 $months[] = $currentMonth->copy()->subMonths($i);
             }
 
-            function hasPayrollData($month, $cutoff) {
-                $count1 = DB::table('payrolls')->where('period', $month)->where('cutoff', $cutoff)->count();
-                $count2 = DB::table('historical_payrolls')->where('period', $month)->where('cutoff', $cutoff)->count();
-                return $count1 + $count2 > 0;
+            $existingPayrollData = [];
+
+            // Preload counts for all combinations to avoid repetitive DB calls in loop
+            foreach ($months as $monthDate) {
+                $monthStr = $monthDate->format('Y-m');
+                foreach (['1-15', '16-30'] as $cutoff) {
+                    $payrollExists = DB::table('payrolls')
+                        ->where('cutoff', $cutoff)
+                        ->whereBetween('period', [
+                            $monthDate->copy()->startOfMonth()->format('Y-m-d'),
+                            $monthDate->copy()->endOfMonth()->format('Y-m-d')
+                        ])
+                        ->exists();
+
+                    $historicalExists = DB::table('historical_payrolls')
+                        ->where('cutoff', $cutoff)
+                        ->whereBetween('period', [
+                            $monthDate->copy()->startOfMonth()->format('Y-m-d'),
+                            $monthDate->copy()->endOfMonth()->format('Y-m-d')
+                        ])
+                        ->exists();
+
+
+                    $existingPayrollData[$monthStr][$cutoff] = $payrollExists || $historicalExists;
+                }
             }
         @endphp
+
 
         @foreach ($months as $monthDate)
         <div class="card shadow mb-4">
@@ -61,7 +83,7 @@
                                     'month' => $monthString
                                 ]) }}" class="btn btn-sm btn-primary">View</a>
 
-                                @unless (hasPayrollData($monthString, '1-15'))
+                                @unless ($existingPayrollData[$monthString]['1-15'])
                                     <button type="button" class="btn btn-sm btn-success mt-1"
                                             data-bs-toggle="modal"
                                             data-bs-target="#uploadModal"
@@ -84,7 +106,7 @@
                                     'month' => $monthString
                                 ]) }}" class="btn btn-sm btn-primary">View</a>
 
-                                @unless (hasPayrollData($monthString, '16-30'))
+                                @unless ($existingPayrollData[$monthString]['16-30'])
                                     <button type="button" class="btn btn-sm btn-success mt-1"
                                             data-bs-toggle="modal"
                                             data-bs-target="#uploadModal"

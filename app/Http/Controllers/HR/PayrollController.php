@@ -176,28 +176,24 @@ class PayrollController extends Controller
     {
         $cutoff = $request->get('cutoff', '1-15');
         $month = $request->get('month', now()->format('Y-m'));
-
+    
         [$start, $end] = $cutoff === '16-30'
             ? [Carbon::parse("$month-16"), Carbon::parse("$month")->endOfMonth()]
             : [Carbon::parse("$month-01"), Carbon::parse("$month-15")];
-
-        $clockings = Clocking::select(
-                'employee_id',
-                DB::raw('SUM(hours_worked) as total_hours'),
-                DB::raw('SUM(overtime_minutes) as total_overtime'),
-                DB::raw('SUM(late_minutes) as total_late')
-            )
-            ->whereBetween('created_at', [$start->startOfDay(), $end->endOfDay()])
-            ->groupBy('employee_id')
+    
+        $employees = Employee::all();
+    
+        // Fetch historical payrolls for the given cutoff/period
+        $historicalPayrolls = DB::table('historical_payrolls')
+            ->where('cutoff', $cutoff)
+            ->where('period', $month . '-' . ($cutoff === '1-15' ? '15' : '30'))
             ->get()
             ->keyBy('employee_id');
-
-        $employees = Employee::all();
-
+    
         return view('hr.payroll.index', compact(
-            'employees', 'clockings', 'cutoff', 'month', 'start', 'end'
+            'employees', 'cutoff', 'month', 'start', 'end', 'historicalPayrolls'
         ));
-    }
+    }    
 
     public function compute($id, Request $request)
     {
