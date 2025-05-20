@@ -239,9 +239,29 @@ class PayrollController extends Controller
     {
         $cutoff = $request->get('cutoff');
         $month = $request->get('month');
+        $period = $cutoff === '1-15' ? "$month-15" : "$month-30";
+
         $employee = Employee::findOrFail($id);
 
-        return view('hr.payroll.payslip', compact('employee', 'cutoff', 'month'));
+        $payroll = DB::table('payrolls')
+            ->where('employee_id', $id)
+            ->where('cutoff', $cutoff)
+            ->where('period', $period)
+            ->first();
+
+        if (!$payroll) {
+            $payroll = DB::table('historical_payrolls')
+                ->where('employee_id', $id)
+                ->where('cutoff', $cutoff)
+                ->where('period', $period)
+                ->first();
+        }
+
+        if (!$payroll) {
+            return back()->with('error', 'Payroll record not found.');
+        }
+
+        return view('hr.payroll.payslip', compact('employee', 'payroll', 'cutoff', 'month'));
     }
 
     // ✅ Normalize function moved to global scope in class
