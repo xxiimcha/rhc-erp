@@ -135,7 +135,8 @@ class PayrollController extends Controller
                     'net_pay'           => $getVal($netPayAliases),
                     'sheet'             => $sheetTitle,
                     'cutoff'            => $request->input('cutoff'),
-                    'period'            => $request->input('month') . '-' . ($request->input('cutoff') === '1-15' ? '15' : '30'),
+                    'period'            => $this->getValidPeriodDate($request->input('month'), $request->input('cutoff')),
+
                 ]);
     
                 $matchedEntries[] = [
@@ -252,4 +253,14 @@ class PayrollController extends Controller
     private function normalizeKey($string) {
         return strtolower(trim(preg_replace('/[\s\x{00A0}\x{2000}-\x{200B}\x{3000}]/u', ' ', $string)));
     }
+
+    private function getValidPeriodDate($month, $cutoff)
+    {
+        $date = $cutoff === '1-15'
+            ? Carbon::createFromFormat('Y-m', $month)->day(15)
+            : Carbon::createFromFormat('Y-m', $month)->endOfMonth();
+
+        return $date->format('Y-m-d');
+    }
+
 }
