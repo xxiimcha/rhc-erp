@@ -8,6 +8,7 @@
     <meta content="RHC ERP" name="description" />
     <meta content="Codebucks" name="author" />
     <link rel="shortcut icon" href="{{ asset('assets/images/logo.png') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <!-- Core CSS -->

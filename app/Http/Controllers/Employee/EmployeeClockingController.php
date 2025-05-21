@@ -18,13 +18,17 @@ class EmployeeClockingController extends Controller
         $now = Carbon::now('Asia/Manila');
         $today = $now->toDateString();
     
-        $clocking = Clocking::where('employee_id', $user->username)
+        // Fetch today's clocking entry
+        $todayClocking = Clocking::where('employee_id', $user->username)
             ->whereDate('time_in', $today)
             ->first();
     
-        $hasCompletedToday = $clocking && $clocking->time_out !== null;
+        $hasCompletedToday = $todayClocking && $todayClocking->time_out !== null;
     
-        return view('employee.clocking', compact('hasCompletedToday'));
+        // Retrieve employee data (assumes username maps to employee_id)
+        $employee = \App\Models\Employee::where('employee_id', $user->username)->first();
+    
+        return view('employee.clocking', compact('hasCompletedToday', 'todayClocking', 'employee'));
     }
     
     public function store(Request $request)

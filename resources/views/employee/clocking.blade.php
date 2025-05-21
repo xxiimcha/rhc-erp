@@ -24,10 +24,24 @@
             <div class="alert alert-danger">{{ $errors->first() }}</div>
         @endif
 
+        {{-- Profile Section --}}
+        <div class="card shadow-sm mb-4">
+            <div class="card-body d-flex align-items-center">
+                <img src="{{ $employee->photo_path ? asset('employees/' . $employee->photo_path) : asset('assets/images/avatar-placeholder.jpg') }}"
+                     class="rounded-circle me-3 border shadow-sm" style="width: 80px; height: 80px; object-fit: cover;" alt="Profile">
+                <div>
+                    <h5 class="mb-0">{{ $employee->first_name }} {{ $employee->last_name }}</h5>
+                    <p class="mb-0 text-muted">{{ $employee->position }} | {{ $employee->department_name }}</p>
+                </div>
+                <div class="ms-auto">
+                    <span class="badge bg-primary fs-6 p-2">Current Time: <span id="clock" class="fw-bold"></span></span>
+                </div>
+            </div>
+        </div>
+
+        {{-- Main Clocking Card --}}
         <div class="card shadow-sm">
             <div class="card-body text-center">
-                <p class="lead">Current Time: <span id="clock" class="fw-bold"></span></p>
-
                 <div class="mb-3">
                     <video id="video" width="300" height="225" autoplay class="border rounded"></video>
                     <canvas id="canvas" width="300" height="225" class="d-none"></canvas>
@@ -37,7 +51,45 @@
                     <div class="alert alert-info">
                         You have completed your time-in and time-out for today. Please come back tomorrow.
                     </div>
-                    <button class="btn btn-secondary" disabled>Time Log Locked</button>
+
+                    {{-- Summary Card --}}
+                    @if(isset($todayClocking))
+                        <div class="card mt-4 mx-auto" style="max-width: 600px;">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0 fw-bold">Today's Attendance Summary</h6>
+                            </div>
+                            <div class="card-body px-4 py-3">
+                                <div class="row g-3">
+                                    <div class="col-6 text-start">
+                                        <i class="fas fa-clock text-secondary me-2"></i><strong>Time In:</strong>
+                                        <div class="text-dark">{{ \Carbon\Carbon::parse($todayClocking->time_in)->format('h:i A') }}</div>
+                                    </div>
+                                    <div class="col-6 text-start">
+                                        <i class="fas fa-door-open text-secondary me-2"></i><strong>Time Out:</strong>
+                                        <div class="text-dark">{{ \Carbon\Carbon::parse($todayClocking->time_out)->format('h:i A') }}</div>
+                                    </div>
+                                    <div class="col-6 text-start">
+                                        <i class="fas fa-user-check text-secondary me-2"></i><strong>Status:</strong>
+                                        <div class="text-dark">{{ ucfirst($todayClocking->status) }}</div>
+                                    </div>
+                                    <div class="col-6 text-start">
+                                        <i class="fas fa-hourglass-half text-secondary me-2"></i><strong>Late:</strong>
+                                        <div class="text-dark">{{ $todayClocking->late_minutes }} min</div>
+                                    </div>
+                                    <div class="col-6 text-start">
+                                        <i class="fas fa-clock-rotate-left text-secondary me-2"></i><strong>Overtime:</strong>
+                                        <div class="text-dark">{{ $todayClocking->overtime_minutes }} min</div>
+                                    </div>
+                                    <div class="col-6 text-start">
+                                        <i class="fas fa-stopwatch text-secondary me-2"></i><strong>Total Hours:</strong>
+                                        <div class="text-dark">{{ number_format($todayClocking->hours_worked, 2) }} hrs</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <button class="btn btn-secondary mt-4" disabled>Time Log Locked</button>
                 @else
                     <form method="POST" action="{{ route('employee.clocking.store') }}" id="clockingForm">
                         @csrf
@@ -50,28 +102,27 @@
     </div>
 </div>
 
-<!-- Modal -->
+{{-- Modal --}}
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="confirmModalLabel">Confirm Time Log</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                <p>This photo will be used to log your Time In/Out.</p>
-                <img id="previewImage" src="" class="img-thumbnail mb-3" width="300" alt="Preview">
+                <p class="mb-3">This photo will be used to log your Time In/Out.</p>
+                <img id="previewImage" src="" class="img-thumbnail mb-3" style="max-width: 100%;" alt="Preview">
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="confirmSubmitBtn">Confirm & Submit</button>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-secondary w-50" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success w-50" id="confirmSubmitBtn">Confirm & Submit</button>
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
