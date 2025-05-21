@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Employee;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
 use Carbon\Carbon;
 use App\Models\Clocking;
 
@@ -22,55 +22,78 @@ class EmployeeClockingController extends Controller
         $request->validate([
             'image' => 'required|string'
         ]);
-    
+
         $user = Auth::user();
-        $now = Carbon::now();
-    
-        // Check if the user already timed in today
+        $now = Carbon::now('Asia/Manila'); // Ensure GMT+8
+        $today = $now->toDateString();
+
+        $startTime = Carbon::parse($today . ' 08:00:00', 'Asia/Manila');
+        $graceTime = Carbon::parse($today . ' 08:05:00', 'Asia/Manila');
+        $endTime   = Carbon::parse($today . ' 17:00:00', 'Asia/Manila');
+
+        // Check if employee already has a record today
         $clocking = Clocking::where('employee_id', $user->username)
-            ->whereDate('time_in', $now->toDateString())
+            ->whereDate('time_in', $today)
             ->first();
-    
-        // Determine if it's time in or time out
-        $type = (!$clocking) ? 'timein' : (($clocking && !$clocking->time_out) ? 'timeout' : 'completed');
-    
+
+        $type = (!$clocking) ? 'timein' : ((!$clocking->time_out) ? 'timeout' : 'completed');
+
         if ($type === 'completed') {
             return back()->with('success', 'You have already completed your time in and out for today.');
         }
-    
-        // Generate custom image filename
+
+        // Generate filename
         $timestamp = $now->format('Ymd_His');
         $imageName = "{$user->username}-{$type}-{$timestamp}.jpg";
-        $imagePath = 'clockings/' . $imageName;
-    
-        // Decode base64 and store the image
-        $imageData = $request->input('image');
-        $base64Str = substr($imageData, strpos($imageData, ',') + 1);
-        $fullPath = public_path('clockings/' . $imageName);
-        file_put_contents($fullPath, base64_decode($base64Str));
-            
+        $imagePath = public_path('clockings/' . $imageName);
+
+        // Ensure directory exists
+        if (!File::exists(public_path('clockings'))) {
+            File::makeDirectory(public_path('clockings'), 0755, true);
+        }
+
+        // Decode and save the image
+        $base64Str = substr($request->input('image'), strpos($request->input('image'), ',') + 1);
+        file_put_contents($imagePath, base64_decode($base64Str));
+
         if ($type === 'timein') {
-            // Save Time In record
+            $status = 'on-time';
+            $lateMinutes = 0;
+
+            if ($now->greaterThan($graceTime)) {
+                $status = 'late';
+                $lateMinutes = $now->diffInMinutes($startTime);
+            }
+
             Clocking::create([
-                'employee_id' => $user->username,
-                'rfid_number' => null,
-                'photo_path' => $imageName,
-                'time_in' => $now,
-                'status' => 'Present'
+                'employee_id'     => $user->username,
+                'rfid_number'     => null,
+                'photo_path'      => $imageName,
+                'time_in'         => $now,
+                'status'          => $status,
+                'late_minutes'    => $lateMinutes
             ]);
-    
+
             return back()->with('success', 'Time In recorded successfully.');
-        } elseif ($type === 'timeout') {
-            // Update Time Out on existing record
+        }
+
+        if ($type === 'timeout') {
+            $overtimeMinutes = 0;
+
+            if ($now->greaterThan($endTime)) {
+                $overtimeMinutes = $now->diffInMinutes($endTime);
+            }
+
             $clocking->update([
-                'time_out' => $now,
-                'photo_path' => $imageName,
-                'hours_worked' => $now->diffInMinutes(Carbon::parse($clocking->time_in)) / 60
+                'time_out'         => $now,
+                'photo_path'       => $imageName,
+                'hours_worked'     => $now->diffInMinutes(Carbon::parse($clocking->time_in)) / 60,
+                'overtime_minutes' => $overtimeMinutes
             ]);
-    
+
             return back()->with('success', 'Time Out recorded successfully.');
         }
-    
+
         return back()->with('error', 'Unable to process clocking.');
-    }    
+    }
 }
