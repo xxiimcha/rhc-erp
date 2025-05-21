@@ -10,11 +10,17 @@ class Leave extends Model
     use HasFactory;
 
     protected $fillable = [
-        'employee_name',
+        'employee_id',
         'leave_type',
         'from_date',
         'to_date',
         'reason',
         'status',
     ];
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
+    }
+
 }
