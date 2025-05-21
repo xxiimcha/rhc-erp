@@ -94,6 +94,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 Route::prefix('employee')->name('employee.')->group(function () {
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+    Route::post('/profile/update-emergency', [ProfileController::class, 'updateEmergency'])->name('profile.updateEmergency');
 
     Route::get('/clocking', [EmployeeClockingController::class, 'index'])->name('clocking');
     Route::post('/clocking', [EmployeeClockingController::class, 'store'])->name('clocking.store');
