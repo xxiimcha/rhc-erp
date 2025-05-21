@@ -15,7 +15,7 @@ class EmployeeLeaveController extends Controller
         $user = Auth::user();
         $leaves = Leave::where('employee_id', $user->username)->orderBy('created_at', 'desc')->get();
 
-        return view('employee.leaves', compact('leaves'));
+        return view('employee.leaves.index', compact('leaves'));
     }
 
     public function store(Request $request)
@@ -39,5 +39,17 @@ class EmployeeLeaveController extends Controller
         ]);
 
         return back()->with('success', 'Leave request submitted successfully.');
+    }
+
+    
+    public function form()
+    {
+        $user = Auth::user();
+        $latestLeave = Leave::where('employee_id', $user->username)->latest()->first();
+
+        return view('employee.leaves.create', [
+            'employee' => $user,
+            'leave' => $latestLeave,
+        ]);
     }
 }

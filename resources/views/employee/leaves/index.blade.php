@@ -8,9 +8,9 @@
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="page-title">My Leave Requests</h4>
-            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#requestLeaveModal">
-                <i class="fas fa-plus-circle me-1"></i> Request Leave
-            </button>
+            <a href="{{ route('employee.leaves.form') }}" class="btn btn-outline-secondary btn-sm me-2">
+                <i class="fas fa-file-alt me-1"></i> Leave Form
+            </a>
         </div>
 
         @if(session('success'))

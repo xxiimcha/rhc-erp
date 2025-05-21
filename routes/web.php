@@ -103,6 +103,8 @@ Route::prefix('employee')->name('employee.')->group(function () {
     
     Route::get('/leaves', [EmployeeLeaveController::class, 'index'])->name('leaves.index');
     Route::post('/leaves', [EmployeeLeaveController::class, 'store'])->name('leaves.store');
+    Route::get('/leaves/form', [EmployeeLeaveController::class, 'form'])->name('leaves.form');
+
 });
 
 // Clocking System
