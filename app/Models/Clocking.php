@@ -12,6 +12,7 @@ class Clocking extends Model
     protected $fillable = [
         'employee_id',
         'rfid_number',
+        'photo_path',
         'time_in',
         'time_out',
         'status',

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 
 use App\Http\Controllers\Employee\ProfileController;
+use App\Http\Controllers\Employee\EmployeeClockingController;
 
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\PayrollSettingController;
@@ -91,13 +92,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });
 
 
-// Employee Panel Routes (No auth middleware for now)
 Route::prefix('employee')->name('employee.')->group(function () {
-    // Profile
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
-    Route::get('/clocking', [App\Http\Controllers\Employee\ClockingController::class, 'index'])->name('clocking');
-    Route::post('/clocking', [App\Http\Controllers\Employee\ClockingController::class, 'store'])->name('clocking.store');
 
+    Route::get('/clocking', [EmployeeClockingController::class, 'index'])->name('clocking');
+    Route::post('/clocking', [EmployeeClockingController::class, 'store'])->name('clocking.store');
 });
 
 // Clocking System
