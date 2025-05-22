@@ -152,6 +152,7 @@ class EmployeeController extends Controller
 
         return back()->with('success', 'Salary record added.');
     }
+
     public function import(Request $request)
     {
         $request->validate([
@@ -307,5 +308,21 @@ class EmployeeController extends Controller
         ]));
 
         return redirect()->route('admin.hr.employees.index')->with('success', 'Employee updated successfully.');
+    }
+
+    public function toggle($id)
+    {
+        $salary = EmployeeSalary::findOrFail($id);
+
+        // Set all other salaries of the employee to inactive
+        EmployeeSalary::where('employee_id', $salary->employee_id)
+            ->where('id', '!=', $salary->id)
+            ->update(['status' => 'inactive']);
+
+        // Set this one to active
+        $salary->status = 'active';
+        $salary->save();
+
+        return back()->with('success', 'Salary status updated.');
     }
 }

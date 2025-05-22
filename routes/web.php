@@ -57,6 +57,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         //rfid & salary declaration
         Route::post('/{id}/rfid', [EmployeeController::class, 'storeRfid'])->name('rfid.store');
         Route::post('{id}/salary', [EmployeeController::class, 'storeSalary'])->name('salary.store');
+        Route::patch('/salaries/{salary}/toggle', [EmployeeController::class, 'toggle'])->name('salaries.toggle');
 
         Route::get('{id}/edit', [EmployeeController::class, 'edit'])->name('edit');
         Route::put('{id}', [EmployeeController::class, 'update'])->name('update');

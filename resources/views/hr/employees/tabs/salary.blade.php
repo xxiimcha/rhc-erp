@@ -20,9 +20,11 @@
                     <td>{{ $salary->created_at->format('M d, Y') }}</td>
                     <td>₱{{ number_format($salary->amount, 2) }}</td>
                     <td>
-                        <span class="badge {{ $salary->status === 'active' ? 'bg-success' : 'bg-secondary' }}">
+                        <button type="button"
+                            class="badge border-0 {{ $salary->status === 'active' ? 'bg-success' : 'bg-secondary' }}"
+                            onclick="confirmToggle('{{ route('admin.hr.employees.salaries.toggle', $salary->id) }}')">
                             {{ ucfirst($salary->status) }}
-                        </span>
+                        </button>
                     </td>
                     <td>{{ $salary->remarks }}</td>
                 </tr>
@@ -32,3 +34,39 @@
         </tbody>
     </table>
 </div>
+
+<script>
+function confirmToggle(url) {
+    Swal.fire({
+        title: 'Set as Active Salary?',
+        text: "Only one salary can be active at a time. Continue?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, set active',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Create a form dynamically and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = url;
+
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = '{{ csrf_token() }}';
+
+            const method = document.createElement('input');
+            method.type = 'hidden';
+            method.name = '_method';
+            method.value = 'PATCH';
+
+            form.appendChild(csrf);
+            form.appendChild(method);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+</script>
+
