@@ -109,11 +109,12 @@
                         </div>
                         <div class="col-md-3">
                             <label>Days Absent</label>
-                            <input type="number" name="days_absent" class="form-control" value="{{ $daysAbsent ?? 0 }}">
+                            <input type="number" name="days_absent" class="form-control" value="{{ $daysAbsentCount ?? 0 }}" readonly>
                         </div>
                         <div class="col-md-3">
                             <label>Tardiness (Minutes)</label>
-                            <input type="number" name="tardiness" class="form-control" value="{{ $totalLateMinutes ?? 0 }}">
+                            <input type="number" name="tardiness" class="form-control" value="{{ $totalLateMinutes ?? 0 }}" readonly>
+
                         </div>
                     </div>
 
@@ -163,6 +164,20 @@
                         <div class="col-md-3">
                             <label>Total Salary</label>
                             <input type="number" name="total_salary" class="form-control" readonly>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h5 class="text-warning">13th Month Pay</h5>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label>Total Gross from Payrolls & Historical Payrolls</label>
+                            <input type="number" id="displayedGross" class="form-control" value="{{ number_format($totalGross ?? 0, 2, '.', '') }}" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label>Computed 13th Month Pay</label>
+                            <input type="number" name="thirteenth_month" class="form-control" value="{{ number_format($thirteenthMonth ?? 0, 2, '.', '') }}" readonly>
                         </div>
                     </div>
 
@@ -220,6 +235,9 @@
     </div>
 </div>
 <script>
+    const totalGrossBackend = {{ $totalGross ?? 0 }};
+    const payrollSettings = @json($settings);
+
     function calculateDerivedFields() {
         const basicPay = parseFloat(document.querySelector('[name="basic_pay"]').value) || 0;
         const pagibig = parseFloat(document.querySelector('[name="pagibig"]').value) || 0;
@@ -234,25 +252,31 @@
         const tardinessMinutes = parseFloat(document.querySelector('[name="tardiness"]').value) || 0;
         const daysAbsent = parseFloat(document.querySelector('[name="days_absent"]').value) || 0;
 
-        const ratePerDay = (basicPay * 12) / 261;
-        const ratePerHour = ratePerDay / 8;
+        const workingDays = payrollSettings.monthly_working_days || 21.75;
+        const workingHours = payrollSettings.monthly_working_hours || 174;
+        const dailyRate = payrollSettings.daily_rate || (basicPay * 12) / payrollSettings.work_days_per_year;
+        const ratePerHour = dailyRate / 8;
         const halfMonthPay = basicPay / 2;
 
-        const percentOfHourly = ratePerHour * 0.25;
-        const rndRate = ratePerHour * 0.10;
-        const shRate = ratePerDay * 0.30;
-        const rhRate = ratePerHour * 2.6;
-        const rateOTS = (ratePerDay * 2) / 8;
-        const restDayRate = ratePerDay + shRate;
+        const percentOfHourly = ratePerHour * (payrollSettings.night_diff_percent || 0.1);
+        const rndRate = ratePerHour * (payrollSettings.night_diff_percent || 0.1);
+        const shRate = dailyRate * (payrollSettings.special_holiday_rate || 0.3);
+        const rhRate = ratePerHour * (payrollSettings.regular_holiday_rate || 2.6);
+        const rateOTS = (dailyRate * (payrollSettings.rate_ots || 2)) / 8;
+        const restDayRate = dailyRate + shRate;
 
-        const tardinessDeduction = (ratePerDay / 480) * tardinessMinutes;
-        const absentDeduction = daysAbsent * ratePerDay;
+        const tardinessDeduction = (dailyRate / 480) * tardinessMinutes;
+        const absentDeduction = daysAbsent * dailyRate;
 
         const totalEarnings = halfMonthPay + allowance + restdayPay + shPay + rhPay + regOt + shOt + adjustedOt;
         const totalDeductions = tardinessDeduction + absentDeduction + pagibig + sss;
         const totalSalary = totalEarnings - totalDeductions;
 
-        document.getElementById('ratePerDay').value = ratePerDay.toFixed(2);
+        const updatedGross = totalGrossBackend + totalSalary;
+        const thirteenthMonth = updatedGross / 12;
+
+        // Set calculated values
+        document.getElementById('ratePerDay').value = dailyRate.toFixed(2);
         document.getElementById('halfMonthPay').value = halfMonthPay.toFixed(2);
         document.querySelector('[name="rate_per_hour"]').value = ratePerHour.toFixed(2);
         document.querySelector('[name="percent_hourly_rate"]').value = percentOfHourly.toFixed(2);
@@ -263,6 +287,10 @@
         document.querySelector('[name="restday_rate"]').value = restDayRate.toFixed(2);
         document.querySelector('[name="tardiness_deduction"]').value = tardinessDeduction.toFixed(2);
         document.querySelector('[name="total_salary"]').value = totalSalary.toFixed(2);
+
+        // Update gross and 13th month
+        document.getElementById('displayedGross').value = updatedGross.toFixed(2);
+        document.querySelector('[name="thirteenth_month"]').value = thirteenthMonth.toFixed(2);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -272,5 +300,6 @@
         calculateDerivedFields();
     });
 </script>
+
 
 @endsection

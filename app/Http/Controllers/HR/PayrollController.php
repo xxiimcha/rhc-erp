@@ -9,9 +9,12 @@ use App\Models\Clocking;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use App\Models\HistoricalPayroll;
 use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use App\Models\PayrollSetting;
+
+use App\Models\Payroll;
+use App\Models\HistoricalPayroll;
 
 class PayrollController extends Controller
 {
@@ -20,6 +23,7 @@ class PayrollController extends Controller
         $month = $request->get('month', now()->format('Y-m'));
         return view('hr.payroll.cutoffs', compact('month'));
     }
+
     public function import(Request $request)
     {
         $request->validate([
@@ -185,16 +189,33 @@ class PayrollController extends Controller
     {
         $cutoff = $request->get('cutoff');
         $monthString = $request->get('month');
+        $month = $monthString;
+    
         $employee = Employee::with('activeSalary')->findOrFail($id);
 
+        $totalGrossPayroll = Payroll::where('employee_id', $employee->id)->sum('total_salary');
+        $totalGrossHistorical = HistoricalPayroll::where('employee_id', $employee->id)->sum('gross');
+        $totalGross = $totalGrossPayroll + $totalGrossHistorical;
+        $thirteenthMonth = $totalGross / 12;
+
+        $employeeNumber = $employee->employee_id; // This is '17001', '25002', etc.
+        $settings = PayrollSetting::first();
+    
         $monthBase = Carbon::createFromFormat('Y-m', $monthString);
         $start = $cutoff === '16-30'
             ? $monthBase->copy()->day(16)->startOfDay()
             : $monthBase->copy()->day(1)->startOfDay();
-        $end = $cutoff === '16-30'
+
+        $cutoffEnd = $cutoff === '16-30'
             ? $monthBase->copy()->endOfMonth()->endOfDay()
             : $monthBase->copy()->day(15)->endOfDay();
-
+        
+        $today = Carbon::today()->endOfDay();
+        $end = $cutoffEnd->lt($today) ? $cutoffEnd : $today;
+    
+        Log::info("Computing payroll for employee_id={$id} (employee_no={$employeeNumber}), Cutoff={$cutoff}, Date range: {$start} to {$end}");
+    
+        // Working days (Mon–Fri)
         $workingDays = collect();
         $date = $start->copy();
         while ($date->lte($end)) {
@@ -203,24 +224,52 @@ class PayrollController extends Controller
             }
             $date->addDay();
         }
-
-        $attendanceDates = Clocking::where('employee_id', $id)
+    
+        $attendanceDates = Clocking::where('employee_id', $employeeNumber)
             ->whereBetween('time_in', [$start, $end])
             ->selectRaw('DATE(time_in) as date')
             ->distinct()
             ->pluck('date')
             ->map(fn($d) => Carbon::parse($d)->format('Y-m-d'));
-
+    
         $daysAbsent = $workingDays->filter(fn($day) => !$attendanceDates->contains($day->format('Y-m-d')));
-        $totalLateMinutes = Clocking::where('employee_id', $id)
+        $daysAbsentCount = $daysAbsent->count();
+        
+        $absentDates = $daysAbsent->map(fn($day) => $day->format('Y-m-d'))->toArray();
+        
+        Log::info("Days absent for employee_id={$employeeNumber}: {$daysAbsentCount}");
+        Log::info("Absent dates: ", $absentDates);
+    
+        $lateEntries = Clocking::where('employee_id', $employeeNumber)
             ->whereBetween('time_in', [$start, $end])
-            ->sum('late_minutes');
-
+            ->whereNotNull('late_minutes')
+            ->get(['id', 'time_in', 'late_minutes']);
+    
+        $totalLateMinutes = $lateEntries->sum(fn($entry) => abs($entry->late_minutes ?? 0));
+    
+        Log::info("Days absent for employee_id={$employeeNumber}: {$daysAbsentCount}");
+        Log::info("Late entries:", $lateEntries->toArray());
+        Log::info("Total late minutes for employee_id={$employeeNumber}: {$totalLateMinutes}");
+    
+        $attendanceLogs = Clocking::where('employee_id', $employeeNumber)
+            ->whereBetween('time_in', [$start, $end])
+            ->orderBy('time_in')
+            ->get();
+    
         return view('hr.payroll.compute', compact(
-            'employee', 'cutoff', 'month', 'daysAbsent', 'totalLateMinutes'
+            'employee',
+            'cutoff',
+            'month',
+            'settings',
+            'daysAbsentCount',
+            'totalLateMinutes',
+            'attendanceLogs',
+            'totalGross',
+            'thirteenthMonth'
         ));
     }
-
+    
+    
     public function payslip($id, Request $request)
     {
         $cutoff = $request->get('cutoff');
