@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Employee\ProfileController;
 use App\Http\Controllers\Employee\EmployeeClockingController;
 use App\Http\Controllers\Employee\EmployeeLeaveController;
+use App\Http\Controllers\Employee\EmployeePayrollController;
 
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\PayrollSettingController;
@@ -100,6 +101,7 @@ Route::prefix('employee')->name('employee.')->group(function () {
     Route::get('/clocking', [EmployeeClockingController::class, 'index'])->name('clocking');
     Route::post('/clocking', [EmployeeClockingController::class, 'store'])->name('clocking.store');
 
+    Route::get('/payroll', [EmployeePayrollController::class, 'index'])->name('payroll');
     
     Route::get('/leaves', [EmployeeLeaveController::class, 'index'])->name('leaves.index');
     Route::post('/leaves', [EmployeeLeaveController::class, 'store'])->name('leaves.store');
