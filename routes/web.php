@@ -15,6 +15,8 @@ use App\Http\Controllers\HR\EmployeeController;
 use App\Http\Controllers\HR\AttendanceController;
 use App\Http\Controllers\HR\PayrollController;
 use App\Http\Controllers\HR\LeaveController;
+use App\Http\Controllers\HR\WorkdayController;
+
 use App\Http\Controllers\ClockingController;
 
 // Show login form
@@ -62,7 +64,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('{id}/edit', [EmployeeController::class, 'edit'])->name('edit');
         Route::put('{id}', [EmployeeController::class, 'update'])->name('update');
     });
-
+    
     // HR → Attendance Tracking
     Route::prefix('hr/attendance')->name('hr.attendance.')->group(function () {
         Route::get('/', [AttendanceController::class, 'index'])->name('index');
@@ -85,6 +87,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/{id}/edit', [LeaveController::class, 'edit'])->name('edit');
         Route::put('/{id}', [LeaveController::class, 'update'])->name('update');
         Route::delete('/{id}', [LeaveController::class, 'destroy'])->name('destroy');
+    });
+    
+    Route::prefix('hr/workdays')->name('hr.workdays.')->group(function () {
+        Route::get('/', [WorkdayController::class, 'index'])->name('index'); // shows all assigned workdays
+        Route::post('/store', [WorkdayController::class, 'store'])->name('store'); // assign new workday
+        Route::delete('/{id}', [WorkdayController::class, 'destroy'])->name('destroy'); // remove assigned workday
     });
     
     //Settings

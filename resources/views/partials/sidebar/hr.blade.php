@@ -8,6 +8,7 @@
         <li><a href="{{ url('admin/hr/employees') }}">Employee Records</a></li>
         <li><a href="{{ url('admin/hr/attendance') }}">Attendance Tracking</a></li>
         <li><a href="{{ url('admin/hr/leaves') }}">Leave Management</a></li>
+        <li><a href="{{ url('admin/hr/workdays') }}">Assign Workdays</a></li>
         <li><a href="{{ url('admin/hr/payroll') }}">Payroll</a></li>
         <li><a href="{{ url('admin/hr/recruitment') }}">Recruitment</a></li>
     </ul>
