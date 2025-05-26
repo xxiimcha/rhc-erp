@@ -269,13 +269,13 @@ class EmployeeController extends Controller
         $employee = Employee::findOrFail($id);
     
         // Delete old photo if exists
-        if ($employee->photo_path && Storage::exists('public/employees/' . $employee->photo_path)) {
-            Storage::delete('public/employees/' . $employee->photo_path);
+        if ($employee->photo_path && file_exists(public_path('employees/' . $employee->photo_path))) {
+            unlink(public_path('employees/' . $employee->photo_path));
         }
     
-        // Store the new file inside /public/employees/
+        // Store the file inside /public/employees/
         $filename = uniqid('emp_') . '.' . $request->file('photo')->getClientOriginalExtension();
-        $request->file('photo')->storeAs('employees', $filename, 'public');
+        $request->file('photo')->move(public_path('employees'), $filename);
     
         $employee->update([
             'photo_path' => $filename,
@@ -283,8 +283,7 @@ class EmployeeController extends Controller
     
         return back()->with('success', 'Profile photo updated successfully.');
     }
-
-
+    
     public function edit($id)
     {
         $employee = Employee::findOrFail($id);
