@@ -226,10 +226,9 @@
         const tardinessDeduction = (dailyRate / 480) * tardinessMinutes;
         const absentDeduction = daysAbsent * dailyRate;
 
-        const totalEarnings = allowance + restdayPay + shPay + rhPay + regOt + shOt + adjustedOt;
+        const totalEarnings = halfMonthPay + allowance + restdayPay + shPay + rhPay + regOt + shOt + adjustedOt;
         const totalDeductions = tardinessDeduction + absentDeduction + pagibig + sss;
-        const totalSalary = Math.max(0, totalEarnings - totalDeductions);
-
+        const totalSalary = totalEarnings - totalDeductions;
 
         const updatedGross = totalGrossBackend + totalSalary;
         const thirteenthMonth = updatedGross / 12;
