@@ -27,11 +27,20 @@
         @php
             $grouped = $employees->groupBy('department');
             $cutoffDate = \Carbon\Carbon::parse($month . '-01');
+            $daysInMonth = $cutoffDate->daysInMonth;
+            $isFebruary = $cutoffDate->format('m') == '02';
+            $isLeapYear = $cutoffDate->isLeapYear();
 
             function fmt($val) {
                 return ($val ?? 0) == 0 ? '--' : number_format($val, 2);
             }
         @endphp
+
+        @if ($isFebruary)
+            <div class="alert alert-info">
+                Note: This is February. {{ $isLeapYear ? 'Leap year (29 days).' : 'Non-leap year (28 days).' }}
+            </div>
+        @endif
 
         @foreach ($grouped as $department => $groupedEmployees)
         <div class="card shadow mb-4">

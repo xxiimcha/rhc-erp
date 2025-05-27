@@ -173,10 +173,14 @@ class PayrollController extends Controller
     
         $employees = Employee::all();
     
-        // Fetch historical payrolls for the given cutoff/period
+        // Use accurate period date
+        $period = $cutoff === '1-15'
+            ? "$month-15"
+            : Carbon::createFromFormat('Y-m', $month)->endOfMonth()->format('Y-m-d');
+    
         $historicalPayrolls = DB::table('historical_payrolls')
             ->where('cutoff', $cutoff)
-            ->where('period', $month . '-' . ($cutoff === '1-15' ? '15' : '30'))
+            ->where('period', $period)
             ->get()
             ->keyBy('employee_id');
     
