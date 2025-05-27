@@ -6,21 +6,43 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\Employee;
+use App\Models\EmployeeWorkday;
 
 class LoginController extends Controller
 {
     public function showLoginForm()
     {
-        // Check if a system_admin exists
-        if (!\App\Models\User::where('role', 'system_admin')->exists()) {
-            \App\Models\User::create([
+        // Create default system_admin if not exists
+        if (!User::where('role', 'system_admin')->exists()) {
+            User::create([
                 'name' => 'System Administrator',
                 'username' => 'SYSADMIN',
-                'email' => 'sysadmin@localhost.com', // <- required field
+                'email' => 'sysadmin@localhost.com',
                 'password' => bcrypt('SYSADMIN'),
                 'role' => 'system_admin',
                 'is_active' => 1,
             ]);
+        }
+
+        // Auto-create workdays for employees without any assigned
+        $employees = Employee::all();
+        $defaultShift = '08:00 AM - 05:00 PM';
+        $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+        foreach ($employees as $employee) {
+            $hasWorkdays = EmployeeWorkday::where('employee_id', $employee->id)->exists();
+
+            if (!$hasWorkdays) {
+                foreach ($daysOfWeek as $day) {
+                    EmployeeWorkday::create([
+                        'employee_id' => $employee->id,
+                        'day_of_week' => $day,
+                        'shift_time' => $defaultShift,
+                        'updated_by' => null, // Optional: use Auth::id() if needed
+                    ]);
+                }
+            }
         }
 
         return view('auth.login');
