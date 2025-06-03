@@ -4,18 +4,17 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class ModifyLeavesTableUseEmployeeId extends Migration
+class CreateLeavesTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        Schema::table('leaves', function (Blueprint $table) {
-            // Drop old column
-            if (Schema::hasColumn('leaves', 'employee_name')) {
-                $table->dropColumn('employee_name');
-            }
-
-            // Add employee_id with FK constraint
-            $table->foreign('employee_id')->references('id')->on('employees')->onDelete('cascade');
+        Schema::create('leaves', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
+            $table->date('leave_date');
+            $table->string('type');
+            $table->text('reason')->nullable();
+            $table->timestamps();
         });
     }
 

@@ -19,10 +19,11 @@ return new class extends Migration
             $table->string('password');
             $table->string('role')->default('user');
             $table->boolean('is_active')->default(1);
+            $table->unsignedBigInteger('card_id')->nullable(); // <- Added field
             $table->rememberToken();
             $table->timestamps();
         });
-        
+
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
