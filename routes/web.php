@@ -40,6 +40,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+    Route::post('/users/{user}/assign-card', [UserController::class, 'assignCard'])->name('users.assignCard');
 
     // Roles & Permissions
     Route::view('/roles', 'admin.users.roles')->name('roles.index');

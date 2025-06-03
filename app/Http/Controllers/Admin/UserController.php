@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Str;
-
+use Illuminate\Support\Facades\Log;
 class UserController extends Controller
 {
     public function index()
@@ -68,5 +68,31 @@ class UserController extends Controller
     {
         User::destroy($id);
         return redirect()->back()->with('success', 'User deleted.');
+    }
+
+
+    public function assignCard(Request $request, $id)
+    {
+        $request->validate([
+            'card_id' => 'required|string|max:255',
+        ]);
+    
+        $user = User::findOrFail($id);
+        $oldCardId = $user->card_id;
+    
+        $user->card_id = $request->card_id;
+        $user->save();
+    
+        // Logging
+        Log::info("Card assigned", [
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'assigned_by' => auth()->check() ? auth()->user()->username : 'system',
+            'previous_card_id' => $oldCardId,
+            'new_card_id' => $request->card_id,
+            'timestamp' => now()->toDateTimeString()
+        ]);
+    
+        return response()->json(['success' => true, 'message' => 'Card assigned successfully.']);
     }
 }

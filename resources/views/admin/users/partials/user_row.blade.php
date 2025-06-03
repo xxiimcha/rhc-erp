@@ -3,6 +3,15 @@
     <td>{{ $user->email }}</td>
     <td>{{ str_replace(',', ', ', $user->department) }}</td>
     <td>
+        @if ($user->card_id)
+            {{ $user->card_id }}
+        @else
+            <a href="#" class="badge bg-warning text-dark" data-bs-toggle="modal" data-bs-target="#assignCardModal{{ $user->id }}">
+                Assign Card Number
+            </a>
+        @endif
+    </td>
+    <td>
         <span class="badge bg-{{ $user->is_active ? 'success' : 'secondary' }}">
             {{ $user->is_active ? 'Active' : 'Inactive' }}
         </span>
@@ -19,3 +28,5 @@
         </form>
     </td>
 </tr>
+
+

@@ -84,6 +84,7 @@
                                     <th>Name</th>
                                     <th>Username</th>
                                     <th>Role</th>
+                                    <th>Card ID</th> <!-- Added -->
                                     <th>Status</th>
                                     <th class="text-center">Actions</th>
                                 </tr>
@@ -148,6 +149,32 @@
           </div>
         </div>
 
+        <!-- Assign Card Modal -->
+        <div class="modal fade" id="assignCardModal{{ $user->id }}" tabindex="-1" aria-labelledby="assignCardModalLabel{{ $user->id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <form id="assignCardForm{{ $user->id }}" class="modal-content shadow rounded">
+                    @csrf
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title w-100 text-center m-0" id="assignCardModalLabel{{ $user->id }}">
+                            Assign Card Number
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white position-absolute end-0 me-2" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-center text-muted mb-3">Please tap the RFID card on the reader.</p>
+                        <input type="text"
+                            name="card_id"
+                            id="cardInput{{ $user->id }}"
+                            class="form-control text-center fs-5 fw-bold py-3"
+                            placeholder="Waiting for card..."
+                            required autofocus>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success w-100" onclick="submitAssignCard({{ $user->id }})">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -192,5 +219,82 @@
         $('#roleSelect').on('change', toggleDepartmentField);
         $('#firstName, #lastName').on('input', generateUsername);
     });
+    
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('assignCardModal{{ $user->id }}');
+        const input = document.getElementById('cardInput{{ $user->id }}');
+
+        if (modal && input) {
+            modal.addEventListener('shown.bs.modal', function () {
+                input.focus();
+            });
+
+            // Prevent form submission when pressing enter
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                }
+            });
+        }
+    });
+
+    function submitAssignCard(userId) {
+        const input = document.getElementById(`cardInput${userId}`);
+        const cardId = input.value.trim();
+        console.log('Submitting card ID:', cardId); // Added console log
+
+        if (!cardId) {
+            showToast('Card ID is required', 'danger');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('card_id', cardId);
+
+        fetch(`/admin/users/${userId}/assign-card`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Server response:', data); // Added console log
+            if (data.success) {
+                showToast('Card successfully assigned!', 'success');
+                document.getElementById(`assignCardModal${userId}`).querySelector('.btn-close').click();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Something went wrong.', 'danger');
+            }
+        })
+        .catch((error) => {
+            console.error('Error submitting card:', error); // Added console log
+            showToast('Failed to assign card. Try again.', 'danger');
+        });
+    }
+
+    function showToast(message, type = 'success') {
+        const toastContainer = document.createElement('div');
+        toastContainer.className = `toast align-items-center text-white bg-${type} border-0 position-fixed top-0 end-0 m-4`;
+        toastContainer.setAttribute('role', 'alert');
+        toastContainer.setAttribute('aria-live', 'assertive');
+        toastContainer.setAttribute('aria-atomic', 'true');
+
+        toastContainer.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+
+        document.body.appendChild(toastContainer);
+        const bsToast = new bootstrap.Toast(toastContainer);
+        bsToast.show();
+        setTimeout(() => toastContainer.remove(), 4000);
+    }
 </script>
 @endsection
