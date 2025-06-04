@@ -15,6 +15,7 @@ class Clocking extends Model
         'photo_path',
         'time_in',
         'time_out',
+        'clock_date',
         'status',
         'late_minutes',
         'overtime_minutes',
