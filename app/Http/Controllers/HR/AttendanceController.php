@@ -13,28 +13,47 @@ class AttendanceController extends Controller
 {
     public function index(Request $request)
     {
+        $filter = $request->input('filter'); // Accepts: daily, weekly, monthly
         $date = $request->input('date', Carbon::now()->toDateString());
         $year = Carbon::parse($date)->year;
-
-        // Fetch attendances
-        $attendances = Clocking::with('employee')
-            ->whereDate('created_at', $date)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Fetch all employees
+    
+        // Base query with eager load
+        $query = Clocking::with('employee')->orderBy('clock_date', 'desc');
+    
+        // Apply filter using clock_date
+        switch ($filter) {
+            case 'daily':
+                $query->whereDate('clock_date', $date);
+                break;
+            case 'weekly':
+                $query->whereBetween('clock_date', [
+                    Carbon::parse($date)->startOfWeek(),
+                    Carbon::parse($date)->endOfWeek()
+                ]);
+                break;
+            case 'monthly':
+                $query->whereMonth('clock_date', Carbon::parse($date)->month)
+                      ->whereYear('clock_date', Carbon::parse($date)->year);
+                break;
+            default:
+                // Default to daily filter if none provided
+                $query->whereDate('clock_date', $date);
+                break;
+        }
+    
+        // Fetch data
+        $attendances = $query->get();
         $employees = Employee::orderBy('first_name')->get();
-
-        // Fetch Philippine holidays via public API
         $holidays = $this->getPhilippineHolidays($year);
-
+    
         return view('hr.attendance.index', [
             'attendances' => $attendances,
             'selectedDate' => $date,
             'employees' => $employees,
-            'holidays' => $holidays
+            'holidays' => $holidays,
+            'filter' => $filter
         ]);
-    }
+    }    
 
     public function edit($id)
     {
@@ -56,7 +75,6 @@ class AttendanceController extends Controller
         $timeIn = Carbon::parse($request->time_in, 'Asia/Manila');
         $timeOut = $request->time_out ? Carbon::parse($request->time_out, 'Asia/Manila') : null;
 
-        // Office time references
         $standardIn = Carbon::parse($date . ' 08:00:00', 'Asia/Manila');
         $grace = Carbon::parse($date . ' 08:05:00', 'Asia/Manila');
         $standardOut = Carbon::parse($date . ' 17:00:00', 'Asia/Manila');
@@ -67,9 +85,8 @@ class AttendanceController extends Controller
         $workStart = $timeIn->lt($standardIn) ? $standardIn : $timeIn;
         $worked = $timeOut ? round($timeOut->diffInMinutes($workStart) / 60, 2) : null;
 
-        // Check for existing record
         $record = Clocking::where('employee_id', $employeeId)
-            ->whereDate('time_in', $date)
+            ->whereDate('clock_date', $date)
             ->first();
 
         if ($record) {
@@ -80,17 +97,20 @@ class AttendanceController extends Controller
                 'late_minutes' => $late,
                 'overtime_minutes' => $overtime,
                 'hours_worked' => $worked,
+                'clock_date' => $date, // update just in case
             ]);
         } else {
             Clocking::create([
                 'employee_id' => $employeeId,
                 'rfid_number' => '-', // optional default
+                'photo_path' => null, // if needed
                 'time_in' => $timeIn,
                 'time_out' => $timeOut,
                 'status' => $status,
                 'late_minutes' => $late,
                 'overtime_minutes' => $overtime,
                 'hours_worked' => $worked,
+                'clock_date' => $date,
             ]);
         }
 

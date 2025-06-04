@@ -17,6 +17,22 @@
             </div>
         </div>
 
+        <!-- Filter Tabs -->
+        <ul class="nav nav-tabs mb-3" id="attendanceTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link {{ request('filter') === null ? 'active' : '' }}" href="{{ route('admin.hr.attendance.index') }}">All</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request('filter') === 'daily' ? 'active' : '' }}" href="{{ route('admin.hr.attendance.index', ['filter' => 'daily']) }}">Daily</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request('filter') === 'weekly' ? 'active' : '' }}" href="{{ route('admin.hr.attendance.index', ['filter' => 'weekly']) }}">Weekly</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request('filter') === 'monthly' ? 'active' : '' }}" href="{{ route('admin.hr.attendance.index', ['filter' => 'monthly']) }}">Monthly</a>
+            </li>
+        </ul>
+
         <div class="card shadow">
             <div class="card-body">
                 <div class="mb-3 row">
@@ -24,7 +40,7 @@
                         <input type="text" id="searchInput" class="form-control" placeholder="Search by name or position...">
                     </div>
                 </div>
-                <table id="attendanceTable" class="table table-hover table-bordered table-striped dt-responsive nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                <table id="datatable" class="table table-hover table-bordered table-striped dt-responsive nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                     <thead class="table-danger">
                         <tr>
                             <th>#</th>
@@ -109,7 +125,7 @@
 
 <script>
     $(document).ready(function () {
-        const table = $('#attendanceTable').DataTable({
+        const table = $('#datatable').DataTable({
             responsive: true,
             pageLength: 10
         });
