@@ -10,6 +10,7 @@ use App\Http\Controllers\Employee\EmployeePayrollController;
 
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\PayrollSettingController;
+use App\Http\Controllers\Admin\TimekeepingController;
 
 use App\Http\Controllers\HR\EmployeeController;
 use App\Http\Controllers\HR\AttendanceController;
@@ -98,8 +99,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
     
     //Settings
     Route::prefix('settings')->name('settings.')->group(function () {
+        // Payroll Settings
         Route::get('/payroll', [PayrollSettingController::class, 'edit'])->name('payroll');
         Route::post('/payroll', [PayrollSettingController::class, 'update'])->name('payroll.update');
+    
+        // Timekeeping Settings
+        Route::get('/timekeeping', [TimekeepingController::class, 'index'])->name('timekeeping');
+        Route::post('/timekeeping/store', [TimekeepingController::class, 'store'])->name('timekeeping.store');
+        Route::delete('/timekeeping/{id}/delete', [TimekeepingController::class, 'destroy'])->name('timekeeping.delete');
+        Route::patch('/timekeeping/{id}/move-date', [TimekeepingController::class, 'updateDate'])->name('timekeeping.updateDate');
+    
+        // Optional: Trigger holiday fetch manually (if needed)
+        Route::get('/timekeeping/fetch-holidays/{year?}', [TimekeepingController::class, 'fetchPHHolidays'])->name('timekeeping.fetch');
     });
 });
 
