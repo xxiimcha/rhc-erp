@@ -4,7 +4,7 @@
     $selectedYear = request('year', $currentYear);
     $selectedMonth = request('month', now()->format('m'));
 
-    $years = range($currentYear - 2, $currentYear); // Adjust if needed
+    $years = range($currentYear - 2, $currentYear);
 @endphp
 
 {{-- Year Tabs --}}
@@ -19,7 +19,7 @@
     @endforeach
 </ul>
 
-{{-- Month Tabs within Selected Year --}}
+{{-- Month Tabs --}}
 <ul class="nav nav-pills mb-4 flex-wrap">
     @for ($m = 1; $m <= 12; $m++)
         @continue($selectedYear == $currentYear && $m > $currentMonth)
@@ -39,7 +39,7 @@
     $endOfMonth = \Carbon\Carbon::parse($month)->endOfMonth();
 @endphp
 
-{{-- Calendar View --}}
+{{-- Calendar --}}
 <div class="table-responsive">
     <table class="table table-bordered text-center align-middle">
         <thead class="table-dark">
@@ -60,23 +60,41 @@
                             $record = $clockings[$dateStr][0] ?? null;
                             $isAbsent = !$record && $current->isPast() && $current->month == $startOfMonth->month;
                             $holiday = $holidays[$dateStr] ?? null;
-                            $isCurrentMonth = $current->format('Y-m') === now()->format('Y-m');
+
+                            $classes = ['p-1', 'align-top'];
+                            if ($current->month != $startOfMonth->month) {
+                                $classes[] = 'bg-light';
+                            } elseif ($holiday) {
+                                $classes[] = 'bg-info';
+                                $classes[] = 'text-white';
+                            } elseif ($isAbsent) {
+                                $classes[] = 'bg-danger';
+                                $classes[] = 'text-white';
+                            }
                         @endphp
-                        <td class="p-1 align-top {{ $current->month != $startOfMonth->month ? 'bg-light' : '' }} {{ $isAbsent ? 'bg-danger text-white' : '' }} {{ $holiday ? 'bg-info' : '' }}">
+
+                        <td class="{{ implode(' ', $classes) }}">
                             <div class="fw-bold">{{ $current->format('d') }}</div>
                             <div class="small">
                                 <strong>In:</strong> {{ $record?->time_in ? \Carbon\Carbon::parse($record->time_in)->format('h:i A') : '-' }}<br>
                                 <strong>Out:</strong> {{ $record?->time_out ? \Carbon\Carbon::parse($record->time_out)->format('h:i A') : '-' }}<br>
+
                                 @if ($record)
                                     <span class="badge {{ $record->status === 'late' ? 'bg-warning' : 'bg-success' }}">{{ ucfirst($record->status) }}</span>
                                 @elseif($isAbsent)
                                     <span class="badge bg-light text-dark">Absent</span>
                                 @endif
+
                                 @if ($holiday)
-                                    <div class="text-primary small">{{ $holiday['localName'] }}</div>
+                                    <div class="mt-1">
+                                        <span class="badge bg-white text-info border" title="{{ $holiday['description'] ?? '' }}">
+                                            <i class="fas fa-calendar-day me-1"></i>{{ $holiday['localName'] }}
+                                        </span>
+                                    </div>
                                 @endif
                             </div>
                         </td>
+
                         @php $date->addDay(); @endphp
                     @endfor
                 </tr>

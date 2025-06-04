@@ -30,14 +30,14 @@ class EmployeeController extends Controller
     public function show($id)
     {
         $employee = Employee::findOrFail($id);
-
+    
         // Get selected year and month from query parameters
         $selectedYear = request()->input('year', now()->format('Y'));
         $selectedMonth = request()->input('month', now()->format('m'));
-
-        // Safely combine into a valid date string
+    
+        // Combine into a valid Carbon instance
         $monthDate = \Carbon\Carbon::createFromFormat('Y-m', $selectedYear . '-' . $selectedMonth);
-
+    
         // Attendance records for the selected month
         $clockings = Clocking::where('employee_id', $employee->employee_id)
             ->whereYear('time_in', $monthDate->year)
@@ -47,10 +47,22 @@ class EmployeeController extends Controller
             ->groupBy(function ($item) {
                 return \Carbon\Carbon::parse($item->time_in)->format('Y-m-d');
             });
-
-        // Fetch holidays if applicable (optional)
-        $holidays = []; // Replace with your logic if needed
-
+    
+        // Fetch holidays for the selected month
+        $holidaysRaw = \App\Models\Holiday::whereYear('date', $selectedYear)
+            ->whereMonth('date', $selectedMonth)
+            ->get();
+    
+        // Index holidays by date (Y-m-d) for easy lookup in view
+        $holidays = $holidaysRaw->keyBy(function ($holiday) {
+            return \Carbon\Carbon::parse($holiday->date)->format('Y-m-d');
+        })->map(function ($holiday) {
+            return [
+                'localName' => $holiday->name,
+                'description' => $holiday->description,
+            ];
+        });
+    
         return view('hr.employees.show', [
             'employee' => $employee,
             'clockings' => $clockings,
@@ -59,8 +71,7 @@ class EmployeeController extends Controller
             'selectedYear' => $selectedYear,
             'selectedMonth' => $selectedMonth,
         ]);
-    }
-
+    }    
 
     public function storeRfid(Request $request, $id)
     {
