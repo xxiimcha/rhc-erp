@@ -17,34 +17,38 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'username' => 'required|string|unique:users,username|max:255',
-            'role' => 'required|in:admin,system_admin',
-            'department' => 'required_if:role,admin|array',
-            'department.*' => 'string'
-        ]);
-
-        $name = strtoupper($request->first_name . ' ' . $request->last_name);
-        $username = strtoupper($request->username);
-        $role = $request->role;
-
-        // Store departments as comma-separated if admin; null otherwise
-        $department = $role === 'admin' ? implode(',', $request->department) : null;
-
-        User::create([
-            'name' => $name,
-            'username' => $username,
-            'email' => $username, // optional or replace with real email
-            'password' => bcrypt($username), // default password is username
-            'role' => $role,
-            'department' => $department,
-            'is_active' => 1,
-        ]);
-
-        return redirect()->back()->with('success', "User created. Username & Password: $username");
-    }
+        try {
+            $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'username' => 'required|string|unique:users,username|max:255',
+                'role' => 'required|in:admin,system_admin',
+                'department' => 'required_if:role,admin|nullable|array',
+                'department.*' => 'nullable|string'
+            ]);
+    
+            $name = strtoupper($request->first_name . ' ' . $request->last_name);
+            $username = strtoupper($request->username);
+            $role = $request->role;
+            $department = $role === 'admin' ? implode(',', $request->department) : null;
+    
+            User::create([
+                'name' => $name,
+                'username' => $username,
+                'email' => $username . '@example.com', // placeholder email
+                'password' => bcrypt($username),
+                'role' => $role,
+                'department' => $department,
+                'is_active' => 1,
+            ]);
+    
+            return redirect()->back()->with('success', "User created. Username & Password: $username");
+    
+        } catch (\Exception $e) {
+            \Log::error('Failed to create user', ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Failed to create user. Please check input.');
+        }
+    }    
 
     public function update(Request $request, User $user)
     {
