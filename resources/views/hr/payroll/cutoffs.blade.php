@@ -19,12 +19,8 @@
             $currentMonth = Carbon::now()->startOfMonth();
             $months = [];
 
-            for ($i = 0; $i < 6; $i++) {
-                $month = $currentMonth->copy()->subMonths($i);
-                if ($month->year == 2024 && $month->month != 12) {
-                    continue; // Skip non-December months in 2024
-                }
-                $months[] = $month;
+            for ($i = 0; $i < 7; $i++) {
+                $months[] = $currentMonth->copy()->subMonths($i);
             }
 
             $existingPayrollData = [];
@@ -55,95 +51,77 @@
             }
         @endphp
 
-        @php
-            $groupedByYear = collect($months)->groupBy(function ($date) {
-                return $date->year;
-            })->sortKeysDesc();
-        @endphp
 
-        @foreach ($groupedByYear as $year => $monthsOfYear)
-            <div class="mt-5">
-                <h5 class="text-primary fw-bold border-start border-4 ps-3 mb-4">{{ $year }}</h5>
-
-                @foreach ($monthsOfYear->sortByDesc('month') as $monthDate)
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-primary text-white" style="background: linear-gradient(to right, #007bff, #0056b3);">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fs-5">{{ $monthDate->format('F Y') }}</span>
-                        </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <table class="table table-bordered table-hover mb-0">
-                            <thead class="table-light text-center">
-                                <tr class="align-middle">
-                                    <th class="w-25">Cutoff Period</th>
-                                    <th>Start Date</th>
-                                    <th>End Date</th>
-                                    <th class="w-25">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php $monthString = $monthDate->format('Y-m'); @endphp
-
-                                {{-- 1–15 --}}
-                                <tr class="align-middle text-center">
-                                    <td><strong>First Half (1–15)</strong></td>
-                                    <td>{{ $monthDate->copy()->startOfMonth()->toFormattedDateString() }}</td>
-                                    <td>{{ $monthDate->copy()->startOfMonth()->addDays(14)->toFormattedDateString() }}</td>
-                                    <td>
-                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
-                                            <a href="{{ route('admin.hr.payroll.view', [
-                                                'cutoff' => '1-15',
-                                                'month' => $monthString
-                                            ]) }}" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-eye"></i> View
-                                            </a>
-
-                                            @unless ($existingPayrollData[$monthString]['1-15'])
-                                            <button type="button" class="btn btn-outline-success btn-sm"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#uploadModal"
-                                                    data-month="{{ $monthString }}"
-                                                    data-cutoff="1-15">
-                                                <i class="fas fa-upload"></i> Upload
-                                            </button>
-                                            @endunless
-                                        </div>
-                                    </td>
-                                </tr>
-
-                                {{-- 16–30 --}}
-                                <tr class="align-middle text-center">
-                                    <td><strong>Second Half (16–30/31)</strong></td>
-                                    <td>{{ $monthDate->copy()->startOfMonth()->addDays(15)->toFormattedDateString() }}</td>
-                                    <td>{{ $monthDate->copy()->endOfMonth()->toFormattedDateString() }}</td>
-                                    <td>
-                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
-                                            <a href="{{ route('admin.hr.payroll.view', [
-                                                'cutoff' => '16-30',
-                                                'month' => $monthString
-                                            ]) }}" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-eye"></i> View
-                                            </a>
-
-                                            @unless ($existingPayrollData[$monthString]['16-30'])
-                                            <button type="button" class="btn btn-outline-success btn-sm"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#uploadModal"
-                                                    data-month="{{ $monthString }}"
-                                                    data-cutoff="16-30">
-                                                <i class="fas fa-upload"></i> Upload
-                                            </button>
-                                            @endunless
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                @endforeach
+        @foreach ($months as $monthDate)
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                {{ $monthDate->format('F Y') }}
             </div>
+            <div class="card-body">
+                <table class="table table-bordered text-center mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Cutoff Period</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php
+                            $monthString = $monthDate->format('Y-m');
+                        @endphp
+
+                        {{-- 1–15 --}}
+                        <tr>
+                            <td>First Half (1–15)</td>
+                            <td>{{ $monthDate->copy()->startOfMonth()->toFormattedDateString() }}</td>
+                            <td>{{ $monthDate->copy()->startOfMonth()->addDays(14)->toFormattedDateString() }}</td>
+                            <td>
+                                <a href="{{ route('admin.hr.payroll.view', [
+                                    'cutoff' => '1-15',
+                                    'month' => $monthString
+                                ]) }}" class="btn btn-sm btn-primary">View</a>
+
+                                @unless ($existingPayrollData[$monthString]['1-15'])
+                                    <button type="button" class="btn btn-sm btn-success mt-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#uploadModal"
+                                            data-month="{{ $monthString }}"
+                                            data-cutoff="1-15">
+                                        Upload Excel
+                                    </button>
+                                @endunless
+                            </td>
+                        </tr>
+
+                        {{-- 16–30 --}}
+                        <tr>
+                            <td>Second Half (16–30/31)</td>
+                            <td>{{ $monthDate->copy()->startOfMonth()->addDays(15)->toFormattedDateString() }}</td>
+                            <td>{{ $monthDate->copy()->endOfMonth()->toFormattedDateString() }}</td>
+                            <td>
+                                <a href="{{ route('admin.hr.payroll.view', [
+                                    'cutoff' => '16-30',
+                                    'month' => $monthString
+                                ]) }}" class="btn btn-sm btn-primary">View</a>
+
+                                @unless ($existingPayrollData[$monthString]['16-30'])
+                                    <button type="button" class="btn btn-sm btn-success mt-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#uploadModal"
+                                            data-month="{{ $monthString }}"
+                                            data-cutoff="16-30">
+                                        Upload Excel
+                                    </button>
+                                @endunless
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
         @endforeach
 
     </div>

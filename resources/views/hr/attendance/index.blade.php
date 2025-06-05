@@ -88,7 +88,7 @@
                             <td>{{ $index + 1 }}</td>
                             <td>{{ $rec->employee->first_name }} {{ $rec->employee->last_name }}</td>
                             <td>{{ $rec->employee->position }}</td>
-                            <td>{{ \Carbon\Carbon::parse($rec->created_at)->format('M d, Y') }}</td>
+                            <td>{{ \Carbon\Carbon::parse($rec->clock_date)->format('M d, Y') }}</td>
                             <td>{{ $rec->time_in ? \Carbon\Carbon::parse($rec->time_in)->format('h:i A') : '-' }}</td>
                             <td>{{ $rec->time_out ? \Carbon\Carbon::parse($rec->time_out)->format('h:i A') : '-' }}</td>
                             <td>
