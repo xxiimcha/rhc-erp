@@ -69,26 +69,29 @@ class AttendanceController extends Controller
             'time_in' => 'required|date',
             'time_out' => 'nullable|date|after_or_equal:time_in',
         ]);
-
+    
         $employeeId = $request->employee_id;
         $date = Carbon::parse($request->date)->toDateString();
         $timeIn = Carbon::parse($request->time_in, 'Asia/Manila');
         $timeOut = $request->time_out ? Carbon::parse($request->time_out, 'Asia/Manila') : null;
-
+    
+        $employee = Employee::where('employee_id', $employeeId)->first();
+        $rfid = $employee && $employee->rfid_number ? $employee->rfid_number : '-';
+    
         $standardIn = Carbon::parse($date . ' 08:00:00', 'Asia/Manila');
         $grace = Carbon::parse($date . ' 08:05:00', 'Asia/Manila');
         $standardOut = Carbon::parse($date . ' 17:00:00', 'Asia/Manila');
-
+    
         $status = $timeIn->gt($grace) ? 'late' : 'on-time';
         $late = $status === 'late' ? $timeIn->diffInMinutes($standardIn) : 0;
         $overtime = $timeOut && $timeOut->gt($standardOut) ? $timeOut->diffInMinutes($standardOut) : 0;
         $workStart = $timeIn->lt($standardIn) ? $standardIn : $timeIn;
         $worked = $timeOut ? round($timeOut->diffInMinutes($workStart) / 60, 2) : null;
-
+    
         $record = Clocking::where('employee_id', $employeeId)
             ->whereDate('clock_date', $date)
             ->first();
-
+    
         if ($record) {
             $record->update([
                 'time_in' => $timeIn,
@@ -97,13 +100,14 @@ class AttendanceController extends Controller
                 'late_minutes' => $late,
                 'overtime_minutes' => $overtime,
                 'hours_worked' => $worked,
-                'clock_date' => $date, // update just in case
+                'clock_date' => $date,
+                'rfid_number' => $rfid, // Update rfid if needed
             ]);
         } else {
             Clocking::create([
                 'employee_id' => $employeeId,
-                'rfid_number' => '-', // optional default
-                'photo_path' => null, // if needed
+                'rfid_number' => $rfid,
+                'photo_path' => null,
                 'time_in' => $timeIn,
                 'time_out' => $timeOut,
                 'status' => $status,
@@ -113,9 +117,9 @@ class AttendanceController extends Controller
                 'clock_date' => $date,
             ]);
         }
-
+    
         return redirect()->back()->with('success', 'Attendance entry saved successfully.');
-    }
+    }    
 
     // Fetch PH holidays from API and return as a keyed collection
     private function getPhilippineHolidays($year)
