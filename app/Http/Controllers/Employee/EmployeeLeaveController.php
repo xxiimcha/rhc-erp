@@ -27,22 +27,31 @@ class EmployeeLeaveController extends Controller
             'start_date' => 'required|date|after_or_equal:today',
             'end_date' => 'required|date|after_or_equal:start_date',
             'reason' => 'required|string|max:1000',
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
         ]);
-
+    
         $user = Auth::user();
-
+    
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('attachments', 'public');
+        }
+    
         Leave::create([
             'employee_id' => $user->username,
-            'type' => $request->type,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
+            'type' => $request->type,
             'reason' => $request->reason,
+            'with_pay' => $request->pay === 'with' ? 1 : 0,
+            'without_pay' => $request->pay === 'without' ? 1 : 0,
             'status' => 'pending',
+            'attachment' => $attachmentPath,
         ]);
-
+    
         return back()->with('success', 'Leave request submitted successfully.');
     }
-
+    
     public function form()
     {
         $user = Auth::user();
@@ -50,7 +59,7 @@ class EmployeeLeaveController extends Controller
 
         return view('employee.leaves.create', compact('employee'));
     }
-    
+
     public function checkBalance(Request $request)
     {
         $user = Auth::user();

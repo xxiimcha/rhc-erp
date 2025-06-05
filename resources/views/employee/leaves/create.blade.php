@@ -5,7 +5,8 @@
 @section('content')
 <div class="page-content">
     <div class="container-fluid">
-        <form method="POST" action="{{ route('employee.leaves.store') }}">
+        <form method="POST" action="{{ route('employee.leaves.store') }}" enctype="multipart/form-data">
+
             @csrf
             <input type="hidden" name="employee_id" value="{{ $employee->employee_id }}">
 
