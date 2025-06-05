@@ -33,13 +33,40 @@
             </li>
         </ul>
 
+        <form method="GET" id="dateFilterForm" class="row g-2 align-items-end mb-3">
+            <input type="hidden" name="filter" id="filterValue" value="{{ request('filter') }}">
+
+            <div class="col-md-3 filter-all d-none">
+                <label class="form-label mb-0">Select Date:</label>
+                <input type="date" id="date" class="form-control"
+                    value="{{ request('date') ?? \Carbon\Carbon::now()->toDateString() }}">
+            </div>
+
+            <div class="col-md-3 filter-daily filter-weekly d-none">
+                <label class="form-label mb-0">From Date:</label>
+                <input type="date" id="date_from" class="form-control" value="{{ request('date_from') }}">
+            </div>
+            <div class="col-md-3 filter-daily filter-weekly d-none">
+                <label class="form-label mb-0">To Date:</label>
+                <input type="date" id="date_to" class="form-control" value="{{ request('date_to') }}">
+            </div>
+
+            <div class="col-md-3 filter-monthly d-none">
+                <label class="form-label mb-0">From Month:</label>
+                <input type="month" id="month_from" class="form-control" value="{{ request('month_from') }}">
+            </div>
+            <div class="col-md-3 filter-monthly d-none">
+                <label class="form-label mb-0">To Month:</label>
+                <input type="month" id="month_to" class="form-control" value="{{ request('month_to') }}">
+            </div>
+
+            <div class="col-auto">
+                <button type="button" id="applyFilterBtn" class="btn btn-secondary">Apply</button>
+            </div>
+        </form>
+
         <div class="card shadow">
             <div class="card-body">
-                <div class="mb-3 row">
-                    <div class="col-md-4">
-                        <input type="text" id="searchInput" class="form-control" placeholder="Search by name or position...">
-                    </div>
-                </div>
                 <table id="datatable" class="table table-hover table-bordered table-striped dt-responsive nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
                     <thead class="table-danger">
                         <tr>
@@ -125,6 +152,60 @@
 
 <script>
     $(document).ready(function () {
+        const filter = "{{ request('filter') ?? '' }}";
+
+        function toggleDateInputs() {
+            $('.filter-all, .filter-daily, .filter-weekly, .filter-monthly').addClass('d-none');
+
+            switch (filter) {
+                case 'daily':
+                    $('.filter-daily').removeClass('d-none');
+                    break;
+                case 'weekly':
+                    $('.filter-weekly').removeClass('d-none');
+                    break;
+                case 'monthly':
+                    $('.filter-monthly').removeClass('d-none');
+                    break;
+                default:
+                    $('.filter-all').removeClass('d-none');
+                    break;
+            }
+        }
+
+        toggleDateInputs();
+        $('#applyFilterBtn').on('click', function () {
+            const filter = $('#filterValue').val();
+            const url = new URL(window.location.href.split('?')[0]);
+            const params = new URLSearchParams();
+
+            if (filter) {
+                params.append('filter', filter);
+            }
+
+            switch (filter) {
+                case 'daily':
+                case 'weekly':
+                    const from = $('#date_from').val();
+                    const to = $('#date_to').val();
+                    if (from) params.append('date_from', from);
+                    if (to) params.append('date_to', to);
+                    break;
+                case 'monthly':
+                    const monthFrom = $('#month_from').val();
+                    const monthTo = $('#month_to').val();
+                    if (monthFrom) params.append('month_from', monthFrom);
+                    if (monthTo) params.append('month_to', monthTo);
+                    break;
+                default:
+                    const date = $('#date').val();
+                    if (date) params.append('date', date);
+                    break;
+            }
+
+            window.location.href = `${url.href}?${params.toString()}`;
+        });
+
         const table = $('#datatable').DataTable({
             responsive: true,
             pageLength: 10

@@ -23,26 +23,34 @@ class AttendanceController extends Controller
         // Apply filter using clock_date
         switch ($filter) {
             case 'daily':
-                $query->whereDate('clock_date', $date);
-                break;
             case 'weekly':
-                $query->whereBetween('clock_date', [
-                    Carbon::parse($date)->startOfWeek(),
-                    Carbon::parse($date)->endOfWeek()
-                ]);
+                if ($request->filled(['date_from', 'date_to'])) {
+                    $query->whereBetween('clock_date', [
+                        Carbon::parse($request->date_from),
+                        Carbon::parse($request->date_to)
+                    ]);
+                }
                 break;
+        
             case 'monthly':
-                $query->whereMonth('clock_date', Carbon::parse($date)->month)
-                      ->whereYear('clock_date', Carbon::parse($date)->year);
+                if ($request->filled(['month_from', 'month_to'])) {
+                    $from = Carbon::parse($request->month_from)->startOfMonth();
+                    $to = Carbon::parse($request->month_to)->endOfMonth();
+                    $query->whereBetween('clock_date', [$from, $to]);
+                }
                 break;
+        
+            case null:
             case '':
-                // Do not filter — show all
+                if ($request->filled('date')) {
+                    $query->whereDate('clock_date', Carbon::parse($request->date));
+                }
                 break;
+        
             default:
-                // Optional: fallback to daily if unknown filter is passed
-                $query->whereDate('clock_date', $date);
+                $query->whereDate('clock_date', $date); // fallback
                 break;
-        }
+        }        
     
         // Fetch data
         $attendances = $query->get();
