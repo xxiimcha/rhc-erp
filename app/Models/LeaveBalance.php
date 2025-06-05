@@ -10,10 +10,11 @@ class LeaveBalance extends Model
     use HasFactory;
 
     protected $fillable = [
-        'employee_name',
+        'employee_id',
         'year',
-        'total_leaves',
-        'leaves_taken',
-        'remaining_leaves',
+        'vacation_leave',
+        'sick_leave',
+        'emergency_leave',
+        'birthday_leave',
     ];
 }

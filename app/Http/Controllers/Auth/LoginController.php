@@ -8,9 +8,10 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Employee;
 use App\Models\EmployeeWorkday;
+use App\Models\LeaveBalance;
 
-class LoginController extends Controller
-{
+class LoginController extends Controller{
+
     public function showLoginForm()
     {
         // Create default system_admin if not exists
@@ -39,9 +40,40 @@ class LoginController extends Controller
                         'employee_id' => $employee->id,
                         'day_of_week' => $day,
                         'shift_time' => $defaultShift,
-                        'updated_by' => null, // Optional: use Auth::id() if needed
+                        'updated_by' => null,
                     ]);
                 }
+            }
+        }
+
+        // Auto-create leave balances per work anniversary
+        $currentYear = now()->year;
+
+        foreach ($employees as $employee) {
+            if (!$employee->date_hired) {
+                continue;
+            }
+
+            // Skip newly hired employees for the current year
+            if (\Carbon\Carbon::parse($employee->date_hired)->year >= $currentYear) {
+                continue;
+            }
+
+            $hasLeaveBalance = LeaveBalance::where('employee_id', $employee->employee_id)
+                ->where('year', $currentYear)
+                ->exists();
+
+            if (!$hasLeaveBalance) {
+                LeaveBalance::create([
+                    'employee_id' => $employee->employee_id,
+                    'year' => $currentYear,
+                    'vacation_leave' => 5,
+                    'sick_leave' => 5,
+                    'emergency_leave' => 5,
+                    'birthday_leave' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
         }
 
