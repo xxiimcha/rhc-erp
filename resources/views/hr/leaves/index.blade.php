@@ -17,77 +17,45 @@
             </div>
         </div>
 
-        {{-- Table --}}
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>#</th>
-                            <th>Employee</th>
-                            <th>Leave Type</th>
-                            <th>From</th>
-                            <th>To</th>
-                            <th>Status</th>
-                            <th>Reason</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($leaves as $index => $leave)
-                        <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ $leave->employee_name }}</td>
-                            <td>{{ $leave->leave_type }}</td>
-                            <td>{{ $leave->from_date }}</td>
-                            <td>{{ $leave->to_date }}</td>
-                            <td>
-                                <span class="badge 
-                                    @if($leave->status === 'Approved') bg-success 
-                                    @elseif($leave->status === 'Pending') bg-warning 
-                                    @else bg-danger 
-                                    @endif">
-                                    {{ $leave->status }}
-                                </span>
-                            </td>
-                            <td>{{ $leave->reason }}</td>
-                            <td>
-                                <a href="{{ route('admin.hr.leave.edit', $leave->id) }}" class="btn btn-primary btn-sm">Edit</a>
-                                <form method="POST" action="{{ route('admin.hr.leave.destroy', $leave->id) }}" style="display:inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" onclick="return confirm('Are you sure?')" class="btn btn-danger btn-sm">
-                                        Delete
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="8" class="text-center">No leave requests found.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+        {{-- Tabs --}}
+        <ul class="nav nav-tabs mb-3" id="leaveTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="pending-tab" data-bs-toggle="tab" href="#pending" role="tab">For Approval</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="approved-tab" data-bs-toggle="tab" href="#approved" role="tab">Approved</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="cancelled-tab" data-bs-toggle="tab" href="#cancelled" role="tab">Cancelled</a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="pending" role="tabpanel">
+                @include('hr.leaves.cards', ['filteredLeaves' => $leaves->where('status', 'Pending')])
+            </div>
+            <div class="tab-pane fade" id="approved" role="tabpanel">
+                @include('hr.leaves.cards', ['filteredLeaves' => $leaves->where('status', 'Approved')])
+            </div>
+            <div class="tab-pane fade" id="cancelled" role="tabpanel">
+                @include('hr.leaves.cards', ['filteredLeaves' => $leaves->where('status', 'Cancelled')])
             </div>
         </div>
 
     </div>
 </div>
-
-{{-- Add Leave Modal --}}
 <div class="modal fade" id="addLeaveModal" tabindex="-1" aria-labelledby="addLeaveModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-        <form method="POST" action="{{ route('admin.hr.leave.store') }}">
+        <form method="POST" action="{{ route('admin.hr.leave.store') }}" enctype="multipart/form-data">
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Add Leave Request</h5>
+                    <h5 class="modal-title">File Emergency Leave Request</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body row g-3">
                     <div class="col-md-6">
-                        <label for="employee_name" class="form-label">Employee Name</label>
+                        <label class="form-label">Employee Name</label>
                         <select name="employee_name" class="form-control" required>
                             <option value="">-- Select Employee --</option>
                             @foreach($employees as $emp)
@@ -97,25 +65,31 @@
                             @endforeach
                         </select>
                     </div>
+
                     <div class="col-md-6">
-                        <label for="leave_type" class="form-label">Leave Type</label>
-                        <select name="leave_type" class="form-control" required>
-                            <option value="Sick">Sick</option>
-                            <option value="Vacation">Vacation</option>
-                            <option value="Emergency">Emergency</option>
-                        </select>
+                        <label class="form-label">Leave Type</label>
+                        <input type="text" class="form-control" value="Emergency" disabled>
+                        <input type="hidden" name="leave_type" value="Emergency">
                     </div>
+
                     <div class="col-md-6">
-                        <label for="from_date" class="form-label">From</label>
-                        <input type="date" name="from_date" class="form-control" required>
+                        <label class="form-label">From</label>
+                        <input type="date" name="from_date" class="form-control" required min="{{ now()->toDateString() }}">
                     </div>
+
                     <div class="col-md-6">
-                        <label for="to_date" class="form-label">To</label>
-                        <input type="date" name="to_date" class="form-control" required>
+                        <label class="form-label">To</label>
+                        <input type="date" name="to_date" class="form-control" required min="{{ now()->toDateString() }}">
                     </div>
+
                     <div class="col-12">
-                        <label for="reason" class="form-label">Reason</label>
+                        <label class="form-label">Reason</label>
                         <textarea name="reason" rows="3" class="form-control" required></textarea>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Attachment <small class="text-muted">(Optional PDF, JPG, PNG)</small></label>
+                        <input type="file" name="attachment" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -125,4 +99,6 @@
         </form>
     </div>
 </div>
+
+
 @endsection
