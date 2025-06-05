@@ -7,12 +7,14 @@
     <div class="container-fluid">
         <form method="POST" action="{{ route('employee.leaves.store') }}">
             @csrf
+            <input type="hidden" name="employee_id" value="{{ $employee->employee_id }}">
 
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Leave Application Form</h5>
                 </div>
                 <div class="card-body">
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label>Name:</label>
@@ -20,7 +22,7 @@
                         </div>
                         <div class="col-md-6">
                             <label>Dept./Branch:</label>
-                            <input type="text" class="form-control" value="{{ $employee->department_name }}" readonly>
+                            <input type="text" class="form-control" value="{{ $employee->department }}" readonly>
                         </div>
                     </div>
 
@@ -28,10 +30,6 @@
                         <div class="col-md-6">
                             <label>Address:</label>
                             <input type="text" class="form-control" value="{{ $employee->address }}" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label>Position:</label>
-                            <input type="text" class="form-control" value="{{ $employee->position }}" readonly>
                         </div>
                     </div>
 
@@ -43,12 +41,7 @@
                         <div class="col-md-6">
                             <label>Date Filed:</label>
                             <input type="text" class="form-control" value="{{ now()->format('F d, Y') }}" readonly>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-info small">
-                        <strong>Instructions:</strong> Please fill up the table below. For Sick Leaves of more than <strong>(2)</strong> days please attach a doctor's certificate.
-                        <br><em>For certain leaves it is necessary to indicate the reason or purpose of the leave in order to get approval from your Department Head.</em>
+                        </div>  
                     </div>
 
                     <div class="table-responsive">
@@ -65,52 +58,26 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (['Vacation Leave', 'Sick Leave', 'Maternity Leave', 'Paternity Leave', 'Emergency Leave'] as $type)
-                                    @php $key = str_replace(' ', '_', strtolower($type)); @endphp
-                                    <tr>
-                                        <td>{{ $type }}</td>
-                                        <td>
-                                            <input type="date" name="leaves[{{ $type }}][from]" class="form-control date-from" data-type="{{ $key }}">
-                                        </td>
-                                        <td>
-                                            <input type="date" name="leaves[{{ $type }}][to]" class="form-control date-to" data-type="{{ $key }}">
-                                        </td>
-                                        <td>
-                                            <input type="number" step="0.5" name="leaves[{{ $type }}][days]" id="days-{{ $key }}" class="form-control" readonly>
-                                        </td>
-                                        <td><input type="checkbox" name="leaves[{{ $type }}][pay]" value="with"></td>
-                                        <td><input type="checkbox" name="leaves[{{ $type }}][pay]" value="without"></td>
-                                        <td><input type="text" name="leaves[{{ $type }}][reason]" class="form-control"></td>
-                                    </tr>
-                                @endforeach
+                                <tr>
+                                    <td>
+                                        <select name="type" id="leave-type" class="form-select" required>
+                                            <option value="">-- Select Leave Type --</option>
+                                            <option value="Vacation">Vacation Leave</option>
+                                            <option value="Sick">Sick Leave</option>
+                                            <option value="Birthday">Birthday Leave</option>
+                                        </select>
+                                    </td>
+                                    <td><input type="date" name="from_date" class="form-control date-from" required></td>
+                                    <td><input type="date" name="to_date" class="form-control date-to" required></td>
+                                    <td><input type="number" name="days" class="form-control" id="days-field" readonly></td>
+                                    <td><input type="checkbox" name="pay" value="with"></td>
+                                    <td><input type="checkbox" name="pay" value="without"></td>
+                                    <td><input type="text" name="reason" class="form-control" required></td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
-
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <label>Signature:</label>
-                            <input type="text" class="form-control" value="{{ $employee->first_name }} {{ $employee->last_name }}" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label>Date Hired:</label>
-                            <input type="text" class="form-control" value="{{ \Carbon\Carbon::parse($employee->date_hired)->format('F d, Y') }}" readonly>
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label>Approved by Immediate Superior:</label>
-                            <input type="text" class="form-control" name="approved_by_superior">
-                        </div>
-                        <div class="col-md-6">
-                            <label>Approved by MANCOM:</label>
-                            <input type="text" class="form-control" name="approved_by_mancom">
-                        </div>
-                    </div>
-
+                    
                     <div class="text-end mt-4">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-paper-plane me-1"></i> Submit Leave Application
@@ -122,23 +89,95 @@
     </div>
 </div>
 
-{{-- Script to auto-calculate days --}}
 <script>
-    document.querySelectorAll('.date-from, .date-to').forEach(input => {
-        input.addEventListener('change', function () {
-            const type = this.dataset.type;
-            const fromDate = document.querySelector(`input.date-from[data-type="${type}"]`).value;
-            const toDate = document.querySelector(`input.date-to[data-type="${type}"]`).value;
-            const output = document.getElementById(`days-${type}`);
+document.addEventListener('DOMContentLoaded', function () {
+    const typeSelect = document.getElementById('leave-type');
+    const withPay = document.querySelector('input[name="pay"][value="with"]');
+    const withoutPay = document.querySelector('input[name="pay"][value="without"]');
+    const fromInput = document.querySelector('.date-from');
+    const toInput = document.querySelector('.date-to');
+    const daysField = document.getElementById('days-field');
 
-            if (fromDate && toDate) {
-                const start = new Date(fromDate);
-                const end = new Date(toDate);
-                const diff = Math.floor((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    let availableCredits = 0;
 
-                output.value = (diff > 0) ? diff : '';
+    const warning = document.createElement('div');
+    warning.classList.add('mt-2', 'text-danger', 'small');
+    daysField.parentNode.appendChild(warning);
+
+    function countWeekdays(start, end) {
+        let count = 0;
+        const current = new Date(start);
+        while (current <= end) {
+            const day = current.getDay();
+            if (day !== 0 && day !== 6) count++;
+            current.setDate(current.getDate() + 1);
+        }
+        return count;
+    }
+
+    function calculateDays() {
+        const fromDate = new Date(fromInput.value);
+        const toDate = new Date(toInput.value);
+
+        if (!isNaN(fromDate) && !isNaN(toDate) && fromDate <= toDate) {
+            const totalDays = countWeekdays(fromDate, toDate);
+            daysField.value = totalDays;
+
+            if (withPay.checked && totalDays > availableCredits) {
+                const excess = totalDays - availableCredits;
+                warning.innerText = `Note: You have ${availableCredits} day(s) of paid leave. ${excess} day(s) will be without pay.`;
+                withoutPay.checked = true;
+            } else {
+                warning.innerText = '';
+                if (!withPay.checked) {
+                    withoutPay.checked = false;
+                }
             }
-        });
+        } else {
+            daysField.value = '';
+            warning.innerText = '';
+            withoutPay.checked = false;
+        }
+    }
+
+    typeSelect.addEventListener('change', function () {
+        const type = this.value;
+        withPay.checked = false;
+        withoutPay.checked = false;
+        withPay.disabled = true;
+        withoutPay.disabled = true;
+        warning.innerText = '';
+        availableCredits = 0;
+
+        if (!type) return;
+
+        fetch(`/employee/check-balance?type=${type}`)
+            .then(res => res.json())
+            .then(data => {
+                availableCredits = parseInt(data.remaining) || 0;
+
+                if (availableCredits > 0) {
+                    withPay.disabled = false;
+                    withoutPay.disabled = false;
+                } else {
+                    withPay.disabled = true;
+                    withoutPay.disabled = false;
+                    withoutPay.checked = true;
+                }
+
+                calculateDays();
+            })
+            .catch(err => {
+                console.error('Error fetching balance:', err);
+                withPay.disabled = true;
+                withoutPay.disabled = true;
+                warning.innerText = 'Unable to fetch leave balance.';
+            });
     });
+
+    fromInput.addEventListener('change', calculateDays);
+    toInput.addEventListener('change', calculateDays);
+    withPay.addEventListener('change', calculateDays);
+});
 </script>
 @endsection

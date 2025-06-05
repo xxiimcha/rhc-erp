@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Leave;
 use Carbon\Carbon;
+use App\Models\Employee;
+use App\Models\LeaveBalance;
 
 class EmployeeLeaveController extends Controller
 {
@@ -41,15 +43,42 @@ class EmployeeLeaveController extends Controller
         return back()->with('success', 'Leave request submitted successfully.');
     }
 
-    
     public function form()
     {
         $user = Auth::user();
-        $latestLeave = Leave::where('employee_id', $user->username)->latest()->first();
+        $employee = Employee::where('employee_id', $user->username)->firstOrFail();
 
-        return view('employee.leaves.create', [
-            'employee' => $user,
-            'leave' => $latestLeave,
+        return view('employee.leaves.create', compact('employee'));
+    }
+    
+    public function checkBalance(Request $request)
+    {
+        $user = Auth::user();
+        $type = $request->query('type');
+        $year = now()->year;
+    
+        $columnMap = [
+            'Vacation' => 'vacation_leave',
+            'Sick' => 'sick_leave',
+            'Emergency' => 'emergency_leave',
+            'Birthday' => 'birthday_leave',
+        ];
+    
+        if (!isset($columnMap[$type])) {
+            return response()->json(['error' => 'Invalid leave type'], 400);
+        }
+    
+        $column = $columnMap[$type];
+    
+        $balance = LeaveBalance::where('employee_id', $user->username)
+            ->where('year', $year)
+            ->first();
+    
+        $remaining = $balance ? $balance->$column : 0;
+    
+        return response()->json([
+            'remaining' => $remaining
         ]);
     }
+    
 }
