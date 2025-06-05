@@ -35,8 +35,11 @@ class AttendanceController extends Controller
                 $query->whereMonth('clock_date', Carbon::parse($date)->month)
                       ->whereYear('clock_date', Carbon::parse($date)->year);
                 break;
+            case '':
+                // Do not filter — show all
+                break;
             default:
-                // Default to daily filter if none provided
+                // Optional: fallback to daily if unknown filter is passed
                 $query->whereDate('clock_date', $date);
                 break;
         }
