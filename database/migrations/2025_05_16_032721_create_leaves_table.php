@@ -21,8 +21,15 @@ class CreateLeavesTable extends Migration
     public function down()
     {
         Schema::table('leaves', function (Blueprint $table) {
+            // Drop foreign key constraint first
+            $table->dropForeign(['employee_id']);
+
+            // Then drop the column
             $table->dropColumn('employee_id');
+
+            // Add back employee_name column
             $table->string('employee_name')->after('id');
         });
     }
+
 }

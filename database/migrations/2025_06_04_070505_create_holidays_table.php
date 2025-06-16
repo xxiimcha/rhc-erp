@@ -11,14 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('holidays', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->date('date');
-            $table->text('description')->nullable();
-            $table->string('source')->default('external'); // external or manual
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('holidays')) {
+            Schema::create('holidays', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->date('date');
+                $table->text('description')->nullable();
+                $table->year('year'); // or ->integer('year');
+                $table->string('source')->default('external'); // external or manual
+                $table->timestamps();
+            });
+        }
     }
 
     /**
@@ -26,6 +29,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('holidays');
+        if (Schema::hasTable('holidays')) {
+            Schema::dropIfExists('holidays');
+        }
     }
 };
