@@ -19,6 +19,8 @@ class Leave extends Model
         'without_pay',
         'status',
         'attachment',
+        'reviewed_by',
+        'approved_by',
     ];
 
     public function employee()

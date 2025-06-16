@@ -152,6 +152,28 @@ document.addEventListener('DOMContentLoaded', function () {
         warning.innerText = '';
         availableCredits = 0;
 
+        // Reset min/max attributes first
+        fromInput.removeAttribute('min');
+        fromInput.removeAttribute('max');
+        toInput.removeAttribute('min');
+        toInput.removeAttribute('max');
+
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+
+        if (type === 'Vacation') {
+            // Set min = 3 days from today
+            const vacationStart = new Date(today);
+            vacationStart.setDate(today.getDate() + 3);
+            const vacationMin = vacationStart.toISOString().split('T')[0];
+            fromInput.setAttribute('min', vacationMin);
+            toInput.setAttribute('min', vacationMin);
+        } else if (type === 'Sick') {
+            // Set max = today
+            fromInput.setAttribute('max', todayStr);
+            toInput.setAttribute('max', todayStr);
+        }
+
         if (!type) return;
 
         fetch(`/employee/check-balance?type=${type}`)
