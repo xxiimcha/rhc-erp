@@ -9,5 +9,6 @@
         <li><a href="{{ url('admin/hr/payroll') }}">Payroll</a></li>
         <li><a href="{{ url('admin/finance/invoices') }}">Invoices</a></li>
         <li><a href="{{ url('admin/finance/reports') }}">Financial Reports</a></li>
+        <li><a href="{{ url('admin/finance/cashflow') }}">Cash Flow</a></li> {{-- NEW --}}
     </ul>
 </li>
