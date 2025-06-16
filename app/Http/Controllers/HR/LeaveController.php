@@ -4,17 +4,18 @@ namespace App\Http\Controllers\HR;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Leave; // Make sure this model exists
+use App\Models\Leave;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Employee;
+use Illuminate\Support\Facades\Auth;
 
 class LeaveController extends Controller
 {
     // Show all leave requests
     public function index()
     {
-        $leaves = Leave::orderBy('created_at', 'desc')->get();
-        $employees = Employee::orderBy('first_name')->get(); // Adjust fields as needed
+        $leaves = Leave::with('employee')->orderBy('created_at', 'desc')->get();
+        $employees = Employee::orderBy('first_name')->get();
 
         return view('hr.leaves.index', compact('leaves', 'employees'));
     }
@@ -79,4 +80,26 @@ class LeaveController extends Controller
 
         return redirect()->route('hr.leaves.index')->with('success', 'Leave request deleted.');
     }
+
+    public function approve($id)
+    {
+        $leave = Leave::findOrFail($id);
+    
+        $leave->status = 'approved';
+        $leave->reviewed_by = Auth::id(); // Logged-in user's ID
+        $leave->approved_by = Auth::id(); // Same user for both fields
+        $leave->save();
+    
+        return back()->with('success', 'Leave approved.');
+    }
+
+    public function reject($id)
+    {
+        $leave = Leave::findOrFail($id);
+        $leave->status = 'rejected';
+        $leave->save();
+
+        return back()->with('success', 'Leave rejected.');
+    }
+
 }

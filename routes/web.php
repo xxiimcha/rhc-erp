@@ -89,6 +89,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/{id}/edit', [LeaveController::class, 'edit'])->name('edit');
         Route::put('/{id}', [LeaveController::class, 'update'])->name('update');
         Route::delete('/{id}', [LeaveController::class, 'destroy'])->name('destroy');
+
+        Route::post('/{id}/approve', [LeaveController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [LeaveController::class, 'reject'])->name('reject');
+
     });
     
     Route::prefix('hr/workdays')->name('hr.workdays.')->group(function () {

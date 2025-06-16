@@ -20,7 +20,14 @@
         {{-- Tabs --}}
         <ul class="nav nav-tabs mb-3" id="leaveTabs" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active" id="pending-tab" data-bs-toggle="tab" href="#pending" role="tab">For Approval</a>
+                <a class="nav-link active position-relative" id="pending-tab" data-bs-toggle="tab" href="#pending" role="tab">
+                    For Approval
+                    @if($leaves->where('status', 'pending')->count() > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                            <span class="visually-hidden">Pending</span>
+                        </span>
+                    @endif
+                </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="approved-tab" data-bs-toggle="tab" href="#approved" role="tab">Approved</a>
@@ -30,20 +37,23 @@
             </li>
         </ul>
 
+
         <div class="tab-content">
             <div class="tab-pane fade show active" id="pending" role="tabpanel">
-                @include('hr.leaves.cards', ['filteredLeaves' => $leaves->where('status', 'Pending')])
+                @include('hr.leaves.cards', ['filteredLeaves' => $leaves->where('status', 'pending')])
             </div>
             <div class="tab-pane fade" id="approved" role="tabpanel">
-                @include('hr.leaves.cards', ['filteredLeaves' => $leaves->where('status', 'Approved')])
+                @include('hr.leaves.cards', ['filteredLeaves' => $leaves->where('status', 'approved')])
             </div>
             <div class="tab-pane fade" id="cancelled" role="tabpanel">
-                @include('hr.leaves.cards', ['filteredLeaves' => $leaves->where('status', 'Cancelled')])
+                @include('hr.leaves.cards', ['filteredLeaves' => $leaves->where('status', 'cancelled')])
             </div>
         </div>
 
     </div>
 </div>
+
+{{-- Add Leave Modal --}}
 <div class="modal fade" id="addLeaveModal" tabindex="-1" aria-labelledby="addLeaveModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form method="POST" action="{{ route('admin.hr.leave.store') }}" enctype="multipart/form-data">
@@ -99,6 +109,4 @@
         </form>
     </div>
 </div>
-
-
 @endsection
