@@ -6,9 +6,7 @@
 <div class="page-content">
     <div class="container-fluid">
         <form method="POST" action="{{ route('employee.leaves.store') }}" enctype="multipart/form-data">
-
             @csrf
-            <input type="hidden" name="employee_id" value="{{ $employee->employee_id }}">
 
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-primary text-white">
@@ -32,17 +30,21 @@
                             <label>Address:</label>
                             <input type="text" class="form-control" value="{{ $employee->address }}" readonly>
                         </div>
-                    </div>
-
-                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label>Contact #:</label>
                             <input type="text" class="form-control" value="{{ $employee->contact_number }}" readonly>
                         </div>
+                    </div>
+
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <label>Date Filed:</label>
                             <input type="text" class="form-control" value="{{ now()->format('F d, Y') }}" readonly>
-                        </div>  
+                        </div>
+                        <div class="col-md-6">
+                            <label>Attachment (Optional)</label>
+                            <input type="file" name="attachment" class="form-control" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                        </div>
                     </div>
 
                     <div class="table-responsive">
@@ -68,17 +70,17 @@
                                             <option value="Birthday">Birthday Leave</option>
                                         </select>
                                     </td>
-                                    <td><input type="date" name="from_date" class="form-control date-from" required></td>
-                                    <td><input type="date" name="to_date" class="form-control date-to" required></td>
+                                    <td><input type="date" name="start_date" class="form-control date-from" required></td>
+                                    <td><input type="date" name="end_date" class="form-control date-to" required></td>
                                     <td><input type="number" name="days" class="form-control" id="days-field" readonly></td>
-                                    <td><input type="checkbox" name="pay" value="with"></td>
-                                    <td><input type="checkbox" name="pay" value="without"></td>
+                                    <td><input type="checkbox" name="with_pay" value="1"></td>
+                                    <td><input type="checkbox" name="without_pay" value="1"></td>
                                     <td><input type="text" name="reason" class="form-control" required></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                    
+
                     <div class="text-end mt-4">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-paper-plane me-1"></i> Submit Leave Application
@@ -93,8 +95,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const typeSelect = document.getElementById('leave-type');
-    const withPay = document.querySelector('input[name="pay"][value="with"]');
-    const withoutPay = document.querySelector('input[name="pay"][value="without"]');
+    const withPay = document.querySelector('input[name="with_pay"]');
+    const withoutPay = document.querySelector('input[name="without_pay"]');
     const fromInput = document.querySelector('.date-from');
     const toInput = document.querySelector('.date-to');
     const daysField = document.getElementById('days-field');
@@ -126,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (withPay.checked && totalDays > availableCredits) {
                 const excess = totalDays - availableCredits;
-                warning.innerText = `Note: You have ${availableCredits} day(s) of paid leave. ${excess} day(s) will be without pay.`;
+                warning.innerText = `Note: You have ${availableCredits} paid day(s). ${excess} day(s) will be without pay.`;
                 withoutPay.checked = true;
             } else {
                 warning.innerText = '';
