@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Session;
+
 use App\Http\Controllers\Auth\LoginController;
 
 use App\Http\Controllers\Employee\ProfileController;
@@ -140,3 +142,9 @@ Route::prefix('employee')->name('employee.')->group(function () {
 // Clocking System
 Route::view('/clocking', 'clocking.index')->name('clocking.index');
 Route::post('/clocking', [ClockingController::class, 'submit'])->name('clocking.submit');
+
+
+Route::get('/session/ping', function () {
+    Session::put('last_activity', now());
+    return response()->json(['status' => 'active']);
+})->name('session.ping');

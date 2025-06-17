@@ -69,5 +69,46 @@
 
 <script src="{{ asset('assets/js/pages/datatables-advanced.init.js') }}"></script>
 <script src="{{ asset('assets/js/app.js') }}"></script>
+
+<script>
+    let inactivityTimer;
+
+    const timeoutDuration = 60 * 1000; // 1 minute
+    const logoutUrl = '{{ route("logout") }}';
+    const pingUrl = '{{ route("session.ping") }}';
+
+    const resetInactivityTimer = () => {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(showInactivityAlert, timeoutDuration);
+    };
+
+    const showInactivityAlert = () => {
+        Swal.fire({
+            title: "You've been inactive",
+            text: "Do you want to stay signed in?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Yes, keep me signed in",
+            cancelButtonText: "No, log me out",
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(pingUrl); // Keep session alive
+                resetInactivityTimer(); // Reset timer
+            } else {
+                window.location.href = logoutUrl; // End session
+            }
+        });
+    };
+
+    // Track user activity
+    window.onload = resetInactivityTimer;
+    document.onmousemove = resetInactivityTimer;
+    document.onkeydown = resetInactivityTimer;
+    document.onclick = resetInactivityTimer;
+    document.onscroll = resetInactivityTimer;
+</script>
+
 </body>
 </html>

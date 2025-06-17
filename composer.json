@@ -11,6 +11,7 @@
         "guzzlehttp/guzzle": "^7.9",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
+        "livewire/livewire": "^3.6",
         "phpoffice/phpspreadsheet": "^4.2",
         "simplehtmldom/simplehtmldom": "@dev",
         "symfony/css-selector": "^7.3",
