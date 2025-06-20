@@ -22,6 +22,9 @@ use App\Http\Controllers\HR\WorkdayController;
 
 use App\Http\Controllers\ClockingController;
 
+
+use App\Http\Controllers\Api\GeneralController;
+
 // Show login form
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
 
@@ -143,6 +146,9 @@ Route::prefix('employee')->name('employee.')->group(function () {
 Route::view('/clocking', 'clocking.index')->name('clocking.index');
 Route::post('/clocking', [ClockingController::class, 'submit'])->name('clocking.submit');
 
+
+Route::get('/franchises', [GeneralController::class, 'index']);
+Route::get('/franchises/{id}', [GeneralController::class, 'show']);
 
 Route::get('/session/ping', function () {
     Session::put('last_activity', now());
