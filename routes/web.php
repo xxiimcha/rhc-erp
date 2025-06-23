@@ -149,6 +149,7 @@ Route::post('/clocking', [ClockingController::class, 'submit'])->name('clocking.
 
 Route::get('/franchises', [GeneralController::class, 'index']);
 Route::get('/franchises/{id}', [GeneralController::class, 'show']);
+Route::get('/service-pricelists', [GeneralController::class, 'getServicePricelists']);
 
 Route::get('/session/ping', function () {
     Session::put('last_activity', now());

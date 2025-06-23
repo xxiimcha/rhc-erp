@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Franchise;
+use App\Models\ServicePricelist;
 
 class GeneralController extends Controller
 {
@@ -27,5 +28,13 @@ class GeneralController extends Controller
         }
 
         return response()->json($franchise);
+    }
+
+    /**
+     * Return all service pricelist entries
+     */
+    public function getServicePricelists()
+    {
+        return response()->json(ServicePricelist::all());
     }
 }

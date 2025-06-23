@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             PayrollSettingsSeeder::class,
             VariantSeeder::class,
             FranchiseSeeder::class,
+            ServicePricelist::class,
         ]);
     }
 }
