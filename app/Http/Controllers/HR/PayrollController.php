@@ -305,41 +305,21 @@ class PayrollController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'employee_id' => 'required|exists:employees,id',
-            'cutoff' => 'required|string',
-            'month' => 'required|string',
-            'basic_pay' => 'required|numeric',
-            'rate_per_day' => 'nullable|numeric',
-            'rate_per_hour' => 'nullable|numeric',
-            'rate_ots' => 'nullable|numeric',
-            'half_month_pay' => 'nullable|numeric',
-            'percent_hourly_rate' => 'nullable|numeric',
-            'sh_rate' => 'nullable|numeric',
-            'rh_rate' => 'nullable|numeric',
-            'restday_rate' => 'nullable|numeric',
-            'allowance' => 'nullable|numeric',
-            'adjusted_ot' => 'nullable|numeric',
-            'days_absent' => 'nullable|numeric',
-            'tardiness' => 'nullable|numeric',
-            'restday_pay' => 'nullable|numeric',
-            'special_holiday_pay' => 'nullable|numeric',
-            'reg_ot_pay' => 'nullable|numeric',
-            'rh_ot_pay' => 'nullable|numeric',
-            'sh_ot_pay' => 'nullable|numeric',
-            'total_ot' => 'nullable|numeric',
-            'pagibig' => 'nullable|numeric',
-            'sss' => 'nullable|numeric',
-            'philhealth' => 'nullable|numeric',
-            'tardiness_deduction' => 'nullable|numeric',
-            'total_salary' => 'required|numeric',
-            'thirteenth_month' => 'nullable|numeric',
-        ]);
-
-        $period = $this->getValidPeriodDate($request->month, $request->cutoff);
-
         $data = $request->all();
-        $data['period'] = $period;
+        $data['period'] = $this->getValidPeriodDate($request->month, $request->cutoff);
+
+        // Define all numeric fields that may be empty but should default to 0
+        $numericFields = [
+            'rate_per_day', 'rate_per_hour', 'rate_ots', 'half_month_pay', 'percent_hourly_rate',
+            'sh_rate', 'rh_rate', 'restday_rate', 'md', 'allowance', 'adjusted_ot',
+            'days_absent', 'tardiness', 'restday_pay', 'special_holiday_pay', 'reg_ot_pay',
+            'rh_ot_pay', 'sh_ot_pay', 'total_ot', 'pagibig', 'sss',
+            'tardiness_deduction', 'total_salary', 'thirteenth_month'
+        ];
+
+        foreach ($numericFields as $field) {
+            $data[$field] = is_null($request->input($field)) ? 0 : $request->input($field);
+        }
 
         Payroll::updateOrCreate(
             [
@@ -352,6 +332,7 @@ class PayrollController extends Controller
 
         return redirect()->back()->with('success', 'Payroll saved successfully.');
     }
+
 
     private function normalizeKey($string) {
         return strtolower(trim(preg_replace('/[\s\x{00A0}\x{2000}-\x{200B}\x{3000}]/u', ' ', $string)));
