@@ -20,5 +20,6 @@ class PayrollSetting extends Model
         'monthly_working_hours',
         'thirteenth_month_base',
         'daily_rate',
+        'thirteenth_month_distribution',
     ];
 }

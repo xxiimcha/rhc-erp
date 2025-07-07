@@ -16,7 +16,7 @@
     <link href="{{ asset('assets/css/icons.min.css') }}" rel="stylesheet" />
     <link href="{{ asset('assets/libs/simplebar/simplebar.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/app.min.css') }}" rel="stylesheet" />
-    
+
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- DataTables -->
     <link href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet" type="text/css" />
@@ -73,7 +73,7 @@
 <script>
     let inactivityTimer;
 
-    const timeoutDuration = 60 * 1000; // 1 minute
+    const timeoutDuration = 6 * 60 * 60 * 1000; // 6 hours
     const logoutUrl = '{{ route("logout") }}';
     const pingUrl = '{{ route("session.ping") }}';
 
