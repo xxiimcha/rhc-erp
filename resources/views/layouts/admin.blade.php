@@ -69,7 +69,7 @@
 
 <script src="{{ asset('assets/js/pages/datatables-advanced.init.js') }}"></script>
 <script src="{{ asset('assets/js/app.js') }}"></script>
-
+@stack('scripts')
 <script>
     let inactivityTimer;
 

@@ -21,5 +21,10 @@ class PayrollSetting extends Model
         'thirteenth_month_base',
         'daily_rate',
         'thirteenth_month_distribution',
+        'thirteenth_month_months',
+        'first_half_from',
+        'first_half_to',
+        'second_half_from',
+        'second_half_to',
     ];
 }

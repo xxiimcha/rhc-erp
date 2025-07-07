@@ -32,7 +32,7 @@
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label>Late Deduction per Minute</label>
-                                    <input type="number" step="0.01" name="late_deduction" value="{{ old('late_deduction', $settings->late_deduction ?? '') }}" class="form-control" readonly required>
+                                    <input type="number" step="0.01" name="late_deduction" value="{{ old('late_deduction', $settings->late_deduction_base_divisor ?? '') }}" class="form-control" readonly required>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label>PhilHealth %</label>
@@ -70,6 +70,72 @@
                                     <label>13th Month Base (Months)</label>
                                     <input type="number" name="thirteenth_month_base" value="{{ old('thirteenth_month_base', $settings->thirteenth_month_base ?? '12') }}" class="form-control" readonly>
                                 </div>
+                                <div class="col-md-4 mb-3">
+                                    <label>13th Month Distribution</label>
+                                    <select name="thirteenth_month_distribution" id="distribution" class="form-select" required>
+                                        <option value="monthly" {{ old('thirteenth_month_distribution', $settings->thirteenth_month_distribution ?? '') === 'monthly' ? 'selected' : '' }}>Monthly</option>
+                                        <option value="semiannual" {{ old('thirteenth_month_distribution', $settings->thirteenth_month_distribution ?? '') === 'semiannual' ? 'selected' : '' }}>Semiannual</option>
+                                        <option value="yearend" {{ old('thirteenth_month_distribution', $settings->thirteenth_month_distribution ?? '') === 'yearend' ? 'selected' : '' }}>Year-End Only</option>
+                                    </select>
+                                </div>
+
+                                @php
+                                $months = [
+                                    '01' => 'January', '02' => 'February', '03' => 'March',
+                                    '04' => 'April', '05' => 'May', '06' => 'June',
+                                    '07' => 'July', '08' => 'August', '09' => 'September',
+                                    '10' => 'October', '11' => 'November', '12' => 'December',
+                                ];
+                                @endphp
+
+                                <div class="col-md-12 mb-3" id="semiannual-months-section" style="display:none;">
+                                <label><strong>13th Month Semiannual Periods</strong></label>
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="col-md-3">
+                                            <label>First Half: From</label>
+                                            <select name="first_half_from" class="form-select">
+                                                @foreach($months as $num => $label)
+                                                    <option value="{{ $num }}" {{ old('first_half_from', $settings->first_half_from ?? '') == $num ? 'selected' : '' }}>
+                                                        {{ $label }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label>First Half: To</label>
+                                            <select name="first_half_to" class="form-select">
+                                                @foreach($months as $num => $label)
+                                                    <option value="{{ $num }}" {{ old('first_half_to', $settings->first_half_to ?? '') == $num ? 'selected' : '' }}>
+                                                        {{ $label }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label>Second Half: From</label>
+                                            <select name="second_half_from" class="form-select">
+                                                @foreach($months as $num => $label)
+                                                    <option value="{{ $num }}" {{ old('second_half_from', $settings->second_half_from ?? '') == $num ? 'selected' : '' }}>
+                                                        {{ $label }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label>Second Half: To</label>
+                                            <select name="second_half_to" class="form-select">
+                                                @foreach($months as $num => $label)
+                                                    <option value="{{ $num }}" {{ old('second_half_to', $settings->second_half_to ?? '') == $num ? 'selected' : '' }}>
+                                                        {{ $label }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                </div>
+                                <input type="text" name="thirteenth_month_months" id="thirteenth_month_months">
+                                <small class="text-muted">Selected months will apply to all years.</small>
                             </div>
 
                             <div class="text-end mt-3">
@@ -158,16 +224,72 @@
         </div>
     </div>
 </div>
-
 @push('scripts')
-<script>
-    document.getElementById('editSettingsBtn').addEventListener('click', function () {
-        const inputs = document.querySelectorAll('#basic input');
-        inputs.forEach(input => input.removeAttribute('readonly'));
 
-        this.classList.add('d-none');
-        document.getElementById('saveSettingsBtn').classList.remove('d-none');
+<script>
+    const distSelect = document.querySelector('select[name="thirteenth_month_distribution"]');
+    const semiannualSection = document.getElementById('semiannual-months-section');
+    const monthsField = document.getElementById('thirteenth_month_months');
+
+    function updateDistributionUI() {
+        const value = distSelect.value;
+        semiannualSection.style.display = value === 'semiannual' ? 'block' : 'none';
+
+        if (value === 'monthly') {
+            monthsField.value = '01,02,03,04,05,06,07,08,09,10,11,12';
+        } else if (value === 'yearend') {
+            monthsField.value = '12';
+        }
+    }
+
+    function calculateSemiannualMonths() {
+        const fhFrom = parseInt(document.querySelector('[name="first_half_from"]').value);
+        const fhTo = parseInt(document.querySelector('[name="first_half_to"]').value);
+        const shFrom = parseInt(document.querySelector('[name="second_half_from"]').value);
+        const shTo = parseInt(document.querySelector('[name="second_half_to"]').value);
+
+        let months = [];
+
+        if (fhFrom <= fhTo) {
+            for (let m = fhFrom; m <= fhTo; m++) {
+                months.push(m.toString().padStart(2, '0'));
+            }
+        }
+
+        if (shFrom <= shTo) {
+            for (let m = shFrom; m <= shTo; m++) {
+                months.push(m.toString().padStart(2, '0'));
+            }
+        }
+
+        monthsField.value = months.join(',');
+    }
+
+    distSelect.addEventListener('change', () => {
+        updateDistributionUI();
+        if (distSelect.value === 'semiannual') {
+            calculateSemiannualMonths();
+        }
     });
+
+    document.querySelectorAll('[name="first_half_from"], [name="first_half_to"], [name="second_half_from"], [name="second_half_to"]').forEach(select => {
+        select.addEventListener('change', () => {
+            if (distSelect.value === 'semiannual') {
+                calculateSemiannualMonths();
+            }
+        });
+    });
+
+    document.querySelector('form').addEventListener('submit', function () {
+        if (distSelect.value === 'semiannual') {
+            calculateSemiannualMonths(); // final check before submit
+        }
+    });
+
+    updateDistributionUI(); // on load
+    if (distSelect.value === 'semiannual') calculateSemiannualMonths(); // prefill on load
 </script>
+
 @endpush
+
 @endsection
