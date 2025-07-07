@@ -71,7 +71,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('{id}/edit', [EmployeeController::class, 'edit'])->name('edit');
         Route::put('{id}', [EmployeeController::class, 'update'])->name('update');
     });
-    
+
     // HR → Attendance Tracking
     Route::prefix('hr/attendance')->name('hr.attendance.')->group(function () {
         Route::get('/', [AttendanceController::class, 'index'])->name('index');
@@ -86,6 +86,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/compute/{id}', [PayrollController::class, 'compute'])->name('compute');
         Route::get('/payslip/{id}', [PayrollController::class, 'payslip'])->name('payslip');
         Route::post('/import', [PayrollController::class, 'import'])->name('import');
+        Route::post('/store', [PayrollController::class, 'store'])->name('store');
+
     });
 
     Route::prefix('hr/leaves')->name('hr.leave.')->group(function () {
@@ -99,25 +101,25 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/{id}/reject', [LeaveController::class, 'reject'])->name('reject');
 
     });
-    
+
     Route::prefix('hr/workdays')->name('hr.workdays.')->group(function () {
         Route::get('/', [WorkdayController::class, 'index'])->name('index'); // shows all assigned workdays
         Route::post('/store', [WorkdayController::class, 'store'])->name('store'); // assign new workday
         Route::delete('/{id}', [WorkdayController::class, 'destroy'])->name('destroy'); // remove assigned workday
     });
-    
+
     //Settings
     Route::prefix('settings')->name('settings.')->group(function () {
         // Payroll Settings
         Route::get('/payroll', [PayrollSettingController::class, 'edit'])->name('payroll');
         Route::post('/payroll', [PayrollSettingController::class, 'update'])->name('payroll.update');
-    
+
         // Timekeeping Settings
         Route::get('/timekeeping', [TimekeepingController::class, 'index'])->name('timekeeping');
         Route::post('/timekeeping/store', [TimekeepingController::class, 'store'])->name('timekeeping.store');
         Route::delete('/timekeeping/{id}/delete', [TimekeepingController::class, 'destroy'])->name('timekeeping.delete');
         Route::patch('/timekeeping/{id}/move-date', [TimekeepingController::class, 'updateDate'])->name('timekeeping.updateDate');
-    
+
         // Optional: Trigger holiday fetch manually (if needed)
         Route::get('/timekeeping/fetch-holidays/{year?}', [TimekeepingController::class, 'fetchPHHolidays'])->name('timekeeping.fetch');
     });
@@ -132,7 +134,7 @@ Route::prefix('employee')->name('employee.')->group(function () {
     Route::post('/clocking', [EmployeeClockingController::class, 'store'])->name('clocking.store');
 
     Route::get('/payroll', [EmployeePayrollController::class, 'index'])->name('payroll');
-    
+
     Route::get('/leaves', [EmployeeLeaveController::class, 'index'])->name('leaves.index');
     Route::post('/leaves', [EmployeeLeaveController::class, 'store'])->name('leaves.store');
     Route::delete('/leaves/{id}/cancel', [EmployeeLeaveController::class, 'cancel'])->name('leaves.cancel');

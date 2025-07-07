@@ -29,16 +29,16 @@ class PayrollController extends Controller
         $request->validate([
             'payroll_file' => 'required|mimes:xlsx,xls',
         ]);
-    
+
         $file = $request->file('payroll_file');
         $spreadsheet = IOFactory::load($file->getRealPath());
         $unmatched = [];
         $matchedEntries = [];
         $inserted = 0;
-    
+
         $netPayAliases = ['Net Pay', 'NetPay', 'Netpay', 'Net Pay ', ' Net Pay'];
         $normalizedNetPayAliases = array_map([$this, 'normalizeKey'], $netPayAliases);
-    
+
         foreach ($spreadsheet->getWorksheetIterator() as $sheet) {
             $sheetTitle = $sheet->getTitle();
             $highestRow = $sheet->getHighestRow();
@@ -46,31 +46,31 @@ class PayrollController extends Controller
             $rawHeaderNames = [];
             $col = 1;
             $foundNetPay = false;
-    
+
             while (true) {
                 $columnLetter = Coordinate::stringFromColumnIndex($col);
                 $value = (string) $sheet->getCell($columnLetter . '7')->getValue();
                 $normalized = $this->normalizeKey($value);
-    
+
                 if (trim($value) !== '') {
                     $headers[$normalized] = $col;
                     $rawHeaderNames[] = $value;
-    
+
                     if (in_array($normalized, $normalizedNetPayAliases)) {
                         $foundNetPay = true;
                         break;
                     }
                 }
-    
+
                 $col++;
                 if ($col > 100) break;
             }
-    
+
             Log::info("Sheet '$sheetTitle' headers: " . json_encode($rawHeaderNames));
-    
+
             for ($row = 8; $row <= $highestRow; $row++) {
                 $rowData = [];
-    
+
                 foreach ($headers as $normalizedKey => $colIndex) {
                     $colLetter = Coordinate::stringFromColumnIndex($colIndex);
                     $cell = $sheet->getCell($colLetter . $row);
@@ -79,7 +79,7 @@ class PayrollController extends Controller
                         : $cell->getCalculatedValue();
                     $rowData[$normalizedKey] = trim((string) $cellValue);
                 }
-    
+
                 $staffCell = strtolower(trim($rowData['staff'] ?? ''));
                 if (
                     $staffCell === '' ||
@@ -90,21 +90,21 @@ class PayrollController extends Controller
                 ) {
                     continue;
                 }
-    
+
                 $nameRaw = trim($rowData['staff']);
                 $nameParts = array_map('trim', explode(',', strtoupper($nameRaw)));
                 $lastName = $nameParts[0] ?? '';
                 $firstName = $nameParts[1] ?? '';
-    
+
                 $employee = Employee::whereRaw("CONCAT(UPPER(TRIM(first_name)), ' ', UPPER(TRIM(last_name))) LIKE ?", ["%$firstName $lastName%"])
                     ->orWhereRaw("CONCAT(UPPER(TRIM(last_name)), ', ', UPPER(TRIM(first_name))) LIKE ?", ["%$lastName, $firstName%"])
                     ->first();
-    
+
                 if (!$employee) {
                     $unmatched[] = $nameRaw;
                     continue;
                 }
-    
+
                 $getVal = function ($aliases) use ($rowData) {
                     foreach ($aliases as $alias) {
                         $key = $this->normalizeKey($alias);
@@ -114,7 +114,7 @@ class PayrollController extends Controller
                     }
                     return 0.00;
                 };
-    
+
                 HistoricalPayroll::create([
                     'employee_id'       => $employee->id,
                     'employee_name'     => $nameRaw,
@@ -142,59 +142,59 @@ class PayrollController extends Controller
                     'period'            => $this->getValidPeriodDate($request->input('month'), $request->input('cutoff')),
 
                 ]);
-    
+
                 $matchedEntries[] = [
                     'employee_name' => $nameRaw,
                     'department'    => $sheetTitle,
                     'gross'         => $getVal(['Gross', 'Gross Pay']),
                     'net_pay'       => $getVal($netPayAliases),
                 ];
-    
+
                 $inserted++;
             }
         }
-    
+
         return redirect()->back()->with([
             'success' => "Historical payroll imported successfully. Inserted: $inserted",
             'matched' => $matchedEntries,
             'unmatched' => $unmatched,
         ]);
     }
-    
+
 
     public function view(Request $request)
     {
         $cutoff = $request->get('cutoff', '1-15');
         $month = $request->get('month', now()->format('Y-m'));
-    
+
         [$start, $end] = $cutoff === '16-30'
             ? [Carbon::parse("$month-16"), Carbon::parse("$month")->endOfMonth()]
             : [Carbon::parse("$month-01"), Carbon::parse("$month-15")];
-    
+
         $employees = Employee::all();
-    
+
         // Use accurate period date
         $period = $cutoff === '1-15'
             ? "$month-15"
             : Carbon::createFromFormat('Y-m', $month)->endOfMonth()->format('Y-m-d');
-    
+
         $historicalPayrolls = DB::table('historical_payrolls')
             ->where('cutoff', $cutoff)
             ->where('period', $period)
             ->get()
             ->keyBy('employee_id');
-    
+
         return view('hr.payroll.index', compact(
             'employees', 'cutoff', 'month', 'start', 'end', 'historicalPayrolls'
         ));
-    }    
+    }
 
     public function compute($id, Request $request)
     {
         $cutoff = $request->get('cutoff');
         $monthString = $request->get('month');
         $month = $monthString;
-    
+
         $employee = Employee::with('activeSalary')->findOrFail($id);
 
         $totalGrossPayroll = Payroll::where('employee_id', $employee->id)->sum('total_salary');
@@ -204,7 +204,7 @@ class PayrollController extends Controller
 
         $employeeNumber = $employee->employee_id; // This is '17001', '25002', etc.
         $settings = PayrollSetting::first();
-    
+
         $monthBase = Carbon::createFromFormat('Y-m', $monthString);
         $start = $cutoff === '16-30'
             ? $monthBase->copy()->day(16)->startOfDay()
@@ -213,12 +213,12 @@ class PayrollController extends Controller
         $cutoffEnd = $cutoff === '16-30'
             ? $monthBase->copy()->endOfMonth()->endOfDay()
             : $monthBase->copy()->day(15)->endOfDay();
-        
+
         $today = Carbon::today()->endOfDay();
         $end = $cutoffEnd->lt($today) ? $cutoffEnd : $today;
-    
+
         Log::info("Computing payroll for employee_id={$id} (employee_no={$employeeNumber}), Cutoff={$cutoff}, Date range: {$start} to {$end}");
-    
+
         // Working days (Mon–Fri)
         $workingDays = collect();
         $date = $start->copy();
@@ -228,38 +228,38 @@ class PayrollController extends Controller
             }
             $date->addDay();
         }
-    
+
         $attendanceDates = Clocking::where('employee_id', $employeeNumber)
             ->whereBetween('time_in', [$start, $end])
             ->selectRaw('DATE(time_in) as date')
             ->distinct()
             ->pluck('date')
             ->map(fn($d) => Carbon::parse($d)->format('Y-m-d'));
-    
+
         $daysAbsent = $workingDays->filter(fn($day) => !$attendanceDates->contains($day->format('Y-m-d')));
         $daysAbsentCount = $daysAbsent->count();
-        
+
         $absentDates = $daysAbsent->map(fn($day) => $day->format('Y-m-d'))->toArray();
-        
+
         Log::info("Days absent for employee_id={$employeeNumber}: {$daysAbsentCount}");
         Log::info("Absent dates: ", $absentDates);
-    
+
         $lateEntries = Clocking::where('employee_id', $employeeNumber)
             ->whereBetween('time_in', [$start, $end])
             ->whereNotNull('late_minutes')
             ->get(['id', 'time_in', 'late_minutes']);
-    
+
         $totalLateMinutes = $lateEntries->sum(fn($entry) => abs($entry->late_minutes ?? 0));
-    
+
         Log::info("Days absent for employee_id={$employeeNumber}: {$daysAbsentCount}");
         Log::info("Late entries:", $lateEntries->toArray());
         Log::info("Total late minutes for employee_id={$employeeNumber}: {$totalLateMinutes}");
-    
+
         $attendanceLogs = Clocking::where('employee_id', $employeeNumber)
             ->whereBetween('time_in', [$start, $end])
             ->orderBy('time_in')
             ->get();
-    
+
         return view('hr.payroll.compute', compact(
             'employee',
             'cutoff',
@@ -272,8 +272,8 @@ class PayrollController extends Controller
             'thirteenthMonth'
         ));
     }
-    
-    
+
+
     public function payslip($id, Request $request)
     {
         $cutoff = $request->get('cutoff');
@@ -303,6 +303,56 @@ class PayrollController extends Controller
         return view('hr.payroll.payslip', compact('employee', 'payroll', 'cutoff', 'month'));
     }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'employee_id' => 'required|exists:employees,id',
+            'cutoff' => 'required|string',
+            'month' => 'required|string',
+            'basic_pay' => 'required|numeric',
+            'rate_per_day' => 'nullable|numeric',
+            'rate_per_hour' => 'nullable|numeric',
+            'rate_ots' => 'nullable|numeric',
+            'half_month_pay' => 'nullable|numeric',
+            'percent_hourly_rate' => 'nullable|numeric',
+            'sh_rate' => 'nullable|numeric',
+            'rh_rate' => 'nullable|numeric',
+            'restday_rate' => 'nullable|numeric',
+            'allowance' => 'nullable|numeric',
+            'adjusted_ot' => 'nullable|numeric',
+            'days_absent' => 'nullable|numeric',
+            'tardiness' => 'nullable|numeric',
+            'restday_pay' => 'nullable|numeric',
+            'special_holiday_pay' => 'nullable|numeric',
+            'reg_ot_pay' => 'nullable|numeric',
+            'rh_ot_pay' => 'nullable|numeric',
+            'sh_ot_pay' => 'nullable|numeric',
+            'total_ot' => 'nullable|numeric',
+            'pagibig' => 'nullable|numeric',
+            'sss' => 'nullable|numeric',
+            'philhealth' => 'nullable|numeric',
+            'tardiness_deduction' => 'nullable|numeric',
+            'total_salary' => 'required|numeric',
+            'thirteenth_month' => 'nullable|numeric',
+        ]);
+
+        $period = $this->getValidPeriodDate($request->month, $request->cutoff);
+
+        $data = $request->all();
+        $data['period'] = $period;
+
+        Payroll::updateOrCreate(
+            [
+                'employee_id' => $data['employee_id'],
+                'cutoff' => $data['cutoff'],
+                'period' => $data['period']
+            ],
+            $data
+        );
+
+        return redirect()->back()->with('success', 'Payroll saved successfully.');
+    }
+
     private function normalizeKey($string) {
         return strtolower(trim(preg_replace('/[\s\x{00A0}\x{2000}-\x{200B}\x{3000}]/u', ' ', $string)));
     }
@@ -315,5 +365,7 @@ class PayrollController extends Controller
 
         return $date->format('Y-m-d');
     }
+
+
 
 }

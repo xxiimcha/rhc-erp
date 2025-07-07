@@ -16,12 +16,12 @@
         <div class="card shadow">
             <div class="card-body">
             <div class="mb-3 text-end">
-  <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#attendanceModal">
-    <i class="fas fa-calendar-alt"></i> View Attendance Logs
-  </button>
-</div>
+            <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#attendanceModal">
+                <i class="fas fa-calendar-alt"></i> View Attendance Logs
+            </button>
+        </div>
 
-                <form action="" method="POST">
+                <form action="{{ route('admin.hr.payroll.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="employee_id" value="{{ $employee->id }}">
                     <input type="hidden" name="cutoff" value="{{ $cutoff }}">
